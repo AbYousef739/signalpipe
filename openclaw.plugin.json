@@ -1,0 +1,8 @@
+{
+  "name": "signalpipe",
+  "version": "1.0.0",
+  "description": "Agentic sales pipeline for lead discovery and prospect nurturing",
+  "entry": "dist/index.js",
+  "homepage": "https://signalpipe.io",
+  "tags": ["sales", "lead-generation", "agentic", "pipeline", "nurturing"]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "signalpipe",
+  "version": "1.0.0",
+  "description": "Agentic sales pipeline — detects buying-intent signals across the open internet, drafts outreach via multi-agent LLM swarm, and nurtures prospects from cold to closed — with human approval at every step.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "SKILL.md", "openclaw.plugin.json"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "openclaw",
+    "clawhub",
+    "agentic",
+    "lead-generation",
+    "sales-pipeline",
+    "llm-swarm",
+    "human-in-the-loop",
+    "signal-detection",
+    "prospect-nurturing"
+  ],
+  "author": "SignalPipe <hello@signalpipe.io>",
+  "license": "MIT",
+  "homepage": "https://signalpipe.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbYousef739/signalpipe.git"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
