@@ -4,7 +4,7 @@
 
 SignalPipe gives your Claude agent a full sales stack — from detecting buying signals on Reddit and Hacker News to closing warm prospects with context-aware messages.
 
-[signalpipe.io](https://signalpipe.io) · [ClawHub](https://clawhub.io/plugins/signalpipe) · [Backend Repo](https://github.com/AbYousef739/signalpipe)
+[signalpipe.io](https://signalpipe.io) · [ClawHub](https://clawhub.io/plugins/signalpipe)
 
 ---
 
@@ -79,7 +79,7 @@ export SIGNALPIPE_OPERATOR_KEY=your-secret-key
 
 Ask your agent:
 - "Show me my pending leads"
-- "Add Vortexia as a product to monitor"
+- "Add my SaaS tool as a product to monitor"
 - "Who should I follow up with today?"
 - "Generate a message for @prospect_handle"
 
