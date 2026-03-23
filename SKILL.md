@@ -145,9 +145,11 @@ Log a signal from a prospect and update their temperature.
 - `handle` — Twitter handle, Reddit username, email, etc.
 - `channel` — `twitter` | `reddit_dm` | `whatsapp` | `telegram` | `email` | `discord`
 - `signal` — what happened:
-  - **Warm:** `booked_demo` (+20) | `asked_pricing` (+15) | `viewed_content` (+8) | `clicked_link` (+3) | `replied` (+5)
-  - **Cool:** `not_interested` (-25) | `too_expensive` (-10) | `bad_timing` (-15) | `ghosted_7_days` (-15) | `ghosted_3_days` (-6) | `competitor` (-8) | `no_time` (-5)
-  - **Neutral:** `not_decision_maker` (0)
+  - **Strong positive:** `booked_demo` | `asked_pricing`
+  - **Positive:** `viewed_content` | `replied` | `clicked_link`
+  - **Strong negative:** `not_interested` | `bad_timing` | `ghosted_7_days`
+  - **Negative:** `too_expensive` | `competitor` | `ghosted_3_days` | `no_time`
+  - **Neutral:** `not_decision_maker`
 - `product_id` (optional) — from `signalpipe_get_products`
 - `mission_id` (optional) — if this prospect came from a Mantidae mission
 

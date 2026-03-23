@@ -89,11 +89,11 @@ Ask your agent:
 
 Each incoming post goes through three stages:
 
-1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear
-2. **Embedding similarity** — cosine similarity against your product's anchor sentences (buyer-perspective phrases like "I need X" or "looking for alternative to Y")
-3. **LLM swarm** — three judges weighted: Skeptic (40%) + Analyst (35%) + Optimist (25%). Skeptic can hard-veto a lead at score < 0.3.
+1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored
+2. **Embedding similarity** — semantic match against your product's anchor sentences (buyer-perspective phrases like "I need X" or "looking for alternative to Y")
+3. **LLM swarm** — a panel of AI judges with different levels of skepticism evaluates each lead; a hard skeptic veto suppresses low-confidence signals entirely
 
-The final score drives RL weight updates: approvals push the weight up, rejections push it down. Floor 0.5, ceiling 2.0.
+The final score feeds a per-product learning loop: approvals push the score threshold up for similar leads, rejections push it down. The system gets sharper the more you use it.
 
 ---
 
@@ -108,8 +108,7 @@ The Companion tracks a 0–100 temperature for each prospect:
 | 60–84 | Closing | Urgency, social proof, CTA |
 | 85+ | Recovery | Re-spark cold leads |
 
-Signal events adjust temperature. Example deltas:
-`booked_demo (+20)`, `asked_pricing (+15)`, `ghosted_7_days (-15)`, `not_interested (-25)`
+Signal events adjust temperature. Warm signals (booking a demo, asking about pricing) move the prospect forward quickly. Cold signals (ghosting, objections) cool them down. The system balances both directions automatically.
 
 ---
 
