@@ -230,9 +230,42 @@ Set before starting the OpenClaw gateway:
 
 ---
 
+## Error Recovery
+
+If a tool call returns an error, follow this decision tree before doing anything else:
+
+### Any tool returns HTTP 401 / "Unauthorized"
+- `SIGNALPIPE_OPERATOR_KEY` is wrong or not set. Tell the user: *"Authentication failed — please check SIGNALPIPE_OPERATOR_KEY is set correctly and matches the backend OPERATOR_KEY."*
+- Do not retry until the user confirms they've fixed the key.
+
+### Any tool returns HTTP 404
+- The backend URL is wrong or the server is down. Tell the user: *"Could not reach the SignalPipe backend. Please check SIGNALPIPE_API_URL is correct and the backend is running."*
+- Suggest: verify the URL returns `{"status":"online"}` at `/health`.
+
+### Any tool returns HTTP 429 / "rate limit"
+- The backend rate limiter triggered (>120 requests/min). Wait 60 seconds, then retry once. If it happens again, tell the user and stop.
+
+### `signalpipe_get_missions` returns empty array
+- This is normal — no leads yet. Do not tell the user something is broken.
+- Say: *"No pending leads right now. The system scouts every 10 minutes. You can trigger an immediate scan with `signalpipe_scout_now`."*
+
+### `signalpipe_add_product` fails with HTTP 400
+- A required field is missing. The error message will name the field. Ask the user for the missing value and retry.
+- Required fields: `name`, `anchor_sentences`.
+
+### `signalpipe_get_message` returns the fallback message ("Just following up…")
+- This means the LLM call failed silently on the backend. The fallback message is intentionally generic.
+- Tell the user: *"The AI couldn't generate a custom message — this is a fallback. You can send it as-is or write your own."*
+
+### Backend unreachable (network timeout / connection refused)
+- Do not loop-retry. Tell the user once: *"SignalPipe backend is not responding. Please check Railway deployment status."*
+
+---
+
 ## Guiding Principles
 
 - **Always get human approval before sending messages.** Never call approve or send autonomously.
 - **Log every signal.** The more you track with `signalpipe_track_prospect`, the smarter the temperature model gets.
 - **Quality over volume.** Reject bad leads — it makes the RL scoring better.
 - **Anchor sentences are the product.** When adding a product, spend time on those buyer phrases.
+- **Never retry auth errors in a loop.** A 401 will keep returning 401 until the key is fixed — looping wastes quota.
