@@ -19,7 +19,7 @@ Fetch all pending missions awaiting human approval.
 **Returns:** Array of missions, each with:
 - `id` — mission ID (use for approve/reject)
 - `product_name` — which product this lead is for
-- `signal_score` — 0.0–1.0 buying intent score
+- `signal_score` — 0–100 buying intent score (cosine similarity × 100, scaled by RL weight)
 - `competitor_flag` — true if a competitor was mentioned
 - `channel` — where to reach them (`twitter` | `reddit_dm` | `email` | etc.)
 - `handle` — prospect's username/email
@@ -129,10 +129,12 @@ The Companion nurtures prospects from first contact to close. It tracks a **temp
 
 | Temperature | Mode | Persona |
 |---|---|---|
-| 0–29 | `nurture` | Educator — teach, add value, no ask |
-| 30–59 | `sales` | Consultant — qualify, show fit |
-| 60–84 | `closing` | Closer — urgency, social proof, CTA |
-| 85–100 | `recovery` | Re-engager — re-spark cold leads |
+| 0–29 | `recovery` | Re-engager — re-spark cold leads, no hard sell |
+| 30–74 | `sales` | Consultant — qualify, show fit, build trust |
+| 75–100 | `closing` | Closer — urgency, social proof, clear CTA |
+
+New prospects start in `nurture` mode (temperature 10) until their first positive signal.
+Temperature transitions: ≥75 → closing · ≥50 → sales · <30 → recovery
 
 ---
 
