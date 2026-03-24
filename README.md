@@ -91,10 +91,9 @@ The Companion tracks a 0–100 temperature for each prospect:
 
 | Range | Mode | Behavior |
 |---|---|---|
-| 0–29 | Nurture | Educate, add value, no ask |
-| 30–59 | Sales | Qualify, show fit |
-| 60–84 | Closing | Urgency, social proof, CTA |
-| 85+ | Recovery | Re-spark cold leads |
+| 0–29 | Recovery | Re-spark cold leads, no hard sell |
+| 30–74 | Sales | Qualify, show fit, build trust |
+| 75–100 | Closing | Urgency, social proof, clear CTA |
 
 Warm signals (booking a demo, asking about pricing) move the prospect forward quickly. Cold signals (ghosting, objections) cool them down. The system balances both directions automatically.
 
