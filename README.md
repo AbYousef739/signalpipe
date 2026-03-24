@@ -2,7 +2,7 @@
 
 **Agentic sales pipeline for AI-powered lead discovery and prospect nurturing.**
 
-SignalPipe gives your Claude agent a full sales stack — from detecting buying signals on Reddit and Hacker News to closing warm prospects with context-aware messages.
+SignalPipe gives your AI agent a full sales stack — from detecting buying signals on Reddit and Hacker News to closing warm prospects with context-aware messages. Works with any OpenClaw-compatible agent.
 
 [signalpipe.io](https://signalpipe.io) · [ClawHub](https://clawhub.io/plugins/signalpipe)
 
@@ -36,23 +36,11 @@ SignalPipe gives your Claude agent a full sales stack — from detecting buying 
 
 ## Quick Start
 
-### 1. Deploy the backend
+### 1. Get a backend
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app)
+**Managed (recommended):** Sign up at [signalpipe.io/pricing](https://signalpipe.io/pricing) — you get an `OPERATOR_KEY` and a backend URL instantly. No infrastructure to manage.
 
-The backend is a FastAPI app requiring:
-- Supabase PostgreSQL (with `pg_cron` + `pg_net` extensions)
-- OpenAI API key (embeddings)
-- Anthropic API key (message generation)
-
-Set these environment variables on Railway:
-```
-SUPABASE_URL=...
-SUPABASE_KEY=...
-OPENAI_API_KEY=...
-ANTHROPIC_API_KEY=...
-OPERATOR_KEY=your-secret-key
-```
+**Self-hosted:** See [Self-Hosting](#self-hosting) below.
 
 ### 2. Install the plugin on OpenClaw
 
@@ -71,8 +59,8 @@ Or add to your `openclaw.config.json`:
 
 Before starting the OpenClaw gateway:
 ```bash
-export SIGNALPIPE_API_URL=https://your-app.up.railway.app
-export SIGNALPIPE_OPERATOR_KEY=your-secret-key
+export SIGNALPIPE_API_URL=https://your-backend-url
+export SIGNALPIPE_OPERATOR_KEY=your-operator-key
 ```
 
 ### 4. Start using it
@@ -108,7 +96,7 @@ The Companion tracks a 0–100 temperature for each prospect:
 | 60–84 | Closing | Urgency, social proof, CTA |
 | 85+ | Recovery | Re-spark cold leads |
 
-Signal events adjust temperature. Warm signals (booking a demo, asking about pricing) move the prospect forward quickly. Cold signals (ghosting, objections) cool them down. The system balances both directions automatically.
+Warm signals (booking a demo, asking about pricing) move the prospect forward quickly. Cold signals (ghosting, objections) cool them down. The system balances both directions automatically.
 
 ---
 
@@ -120,7 +108,7 @@ Signal events adjust temperature. Warm signals (booking a demo, asking about pri
 | Growth | $149/mo | 10 | 250 | 5,000 |
 | Scale | $399/mo | Unlimited | Unlimited | Unlimited |
 
-[Start free trial →](https://signalpipe.io/pricing)
+[View pricing →](https://signalpipe.io/pricing)
 
 ---
 
@@ -133,9 +121,10 @@ Backend: Business Source License 1.1 (converts to Apache 2.0 after 4 years)
 
 ## Self-Hosting
 
-The backend source is available for self-hosting under BUSL. You need:
+The backend is a FastAPI app. You will need:
 - Python 3.11+
-- PostgreSQL (Supabase recommended for `pg_cron`)
-- Railway or any host that supports long-running processes
+- PostgreSQL with `pg_cron` and `pg_net` extensions (Supabase recommended)
+- A host that supports long-running processes (Railway recommended)
+- OpenAI API key (embeddings) and Anthropic API key (message generation)
 
-See `/api/README.md` in the backend repo for full self-hosting instructions.
+See `/api/README.md` in the backend repo for full setup instructions.
