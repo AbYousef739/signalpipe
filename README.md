@@ -12,7 +12,7 @@ SignalPipe gives your AI agent a full sales stack — from detecting buying sign
 
 **Top of funnel (Mantidae):** Continuously scouts RSS feeds, Reddit, and Hacker News for posts matching your products' buying-intent profiles. Scores each signal with a lightweight embedding model + LLM swarm, then surfaces the best leads for human approval — complete with an AI-drafted reply.
 
-**Mid/bottom of funnel (Companion):** Tracks every prospect's temperature (0–100), automatically selects the right persona (Educator → Consultant → Closer → Re-engager), and generates the next message when you ask. Remembers objections, respects timing, and never spams.
+**Mid/bottom of funnel (Nurture Engine):** Tracks every prospect's temperature (0–100), automatically selects the right persona (Educator → Consultant → Closer → Re-engager), and generates the next message when you ask. Remembers objections, respects timing, and never spams.
 
 ---
 
@@ -87,7 +87,7 @@ The final score feeds a per-product learning loop: approvals push the score thre
 
 ## Temperature Model
 
-The Companion tracks a 0–100 temperature for each prospect:
+The Nurture Engine tracks a 0–100 temperature for each prospect:
 
 | Range | Mode | Behavior |
 |---|---|---|
