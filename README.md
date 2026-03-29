@@ -77,11 +77,14 @@ Ask your agent:
 
 Each incoming post goes through three stages:
 
-1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored
-2. **Embedding similarity** — semantic match against your product's anchor sentences (buyer-perspective phrases like "I need X" or "looking for alternative to Y")
-3. **LLM swarm** — a panel of AI judges with different levels of skepticism evaluates each lead; a hard skeptic veto suppresses low-confidence signals entirely
+1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored (~85% of posts eliminated here, zero API cost)
+2. **Embedding similarity** — cosine similarity against pre-cached anchor vectors using OpenAI `text-embedding-3-small`; buyer-perspective phrases like "I need X" or "looking for alternative to Y"
+3. **Sarcasm detection** — LLM check that distinguishes genuine buyers from casual venting or irony; fails open so real leads are never suppressed
+4. **LLM swarm** — three AI judges (Skeptic 40%, Analyst 35%, Optimist 25%) evaluate independently via concurrent threads; hard skeptic veto at score < 0.3 suppresses any signal the most skeptical judge dismisses entirely
 
-The final score feeds a per-product learning loop: approvals push the score threshold up for similar leads, rejections push it down. The system gets sharper the more you use it.
+Competitor-switch posts are hard-floored at score 60 — they always reach your review queue regardless of general intent score.
+
+The final score feeds a per-product learning loop: approvals nudge the weight up (+0.05, max 2.0), rejections nudge it down (−0.02, floor 0.5). The asymmetry is intentional — conservative about boosting, aggressive about penalizing. The system gets sharper the more you use it.
 
 ---
 
@@ -95,7 +98,21 @@ The Nurture Engine tracks a 0–100 temperature for each prospect:
 | 30–74 | Sales | Qualify, show fit, build trust |
 | 75–100 | Closing | Urgency, social proof, clear CTA |
 
-Warm signals (booking a demo, asking about pricing) move the prospect forward quickly. Cold signals (ghosting, objections) cool them down. The system balances both directions automatically.
+**13 signal types** map to calibrated heat deltas:
+
+| Signal | Delta | Signal | Delta |
+|---|---|---|---|
+| `booked_demo` | +20 | `not_interested` | −25 |
+| `asked_pricing` | +15 | `bad_timing` | −15 |
+| `viewed_content` | +8 | `ghosted_7_days` | −15 |
+| `replied` | +5 | `too_expensive` | −10 |
+| `clicked_link` | +3 | `competitor` | −8 |
+| `not_decision_maker` | 0 | `no_time` | −5 |
+| `ghosted_3_days` | −6 | | |
+
+**One-directional mode transitions** — once a prospect reaches Closing, they never regress to Sales. Once in Recovery, they only re-enter Sales when they warm again. No oscillation, no spam.
+
+**Objection memory** — recorded objections (`too_expensive`, `competitor`, `bad_timing`, `no_time`, `not_decision_maker`) persist permanently and are injected into every future message generation call, along with the last 6 interactions. The AI never repeats a pitch angle that already failed.
 
 ---
 
