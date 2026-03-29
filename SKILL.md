@@ -109,8 +109,8 @@ Add an RSS feed or search source to monitor for a product.
 
 **Parameters:**
 - `product_id` — from `signalpipe_get_products`
-- `platform` — `rss` | `hn` | `reddit` | `twitter_search`
-- `rss_url` — full feed URL
+- `platform` — `rss` | `hn` | `reddit` (active monitoring); `twitter_search` routes leads to Twitter reply outreach but does not monitor Twitter feeds — X direct monitoring is not yet supported
+- `rss_url` — full feed URL (Reddit and HN use RSS URLs; leave empty for `twitter_search`)
 
 ---
 

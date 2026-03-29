@@ -126,4 +126,24 @@ The backend is a FastAPI app. You will need:
 - A host that supports long-running processes (Railway recommended)
 - OpenAI API key (embeddings) and Anthropic API key (message generation)
 
+The sidecar handles outreach execution. Set these to enable each channel:
+
+**Reddit DM outreach:**
+```bash
+export REDDIT_CLIENT_ID=your_reddit_app_id
+export REDDIT_CLIENT_SECRET=your_reddit_app_secret
+export MAX_REDDIT_DMS_PER_DAY=5   # default: 5
+```
+
+**Twitter / X reply outreach** (requires X API Basic tier or above):
+```bash
+export X_API_KEY=your_x_api_key
+export X_API_SECRET=your_x_api_secret
+export X_ACCESS_TOKEN=your_access_token
+export X_ACCESS_SECRET=your_access_token_secret
+export MAX_TWITTER_ACTIONS_PER_DAY=10   # default: 10
+```
+
+Both channels are optional. If credentials are not set, that outreach channel is silently skipped and the mission stays queued.
+
 See `/api/README.md` in the backend repo for full setup instructions.
