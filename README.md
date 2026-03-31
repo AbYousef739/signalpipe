@@ -311,4 +311,4 @@ export MAX_TWITTER_ACTIONS_PER_DAY=10   # default: 10
 
 Both channels are optional. If credentials are not set, that outreach channel is silently skipped and the mission stays queued.
 
-See `/api/README.md` in the backend repo for full setup instructions.
+Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
