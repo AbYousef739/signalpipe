@@ -17,5 +17,4 @@ export default function register(api: any): void {
   registerCompanionTools(api)
 
   console.log('[SignalPipe] Plugin loaded — 10 tools registered')
-  console.log('[SignalPipe] Backend:', process.env.SIGNALPIPE_API_URL || 'http://localhost:8000')
 }

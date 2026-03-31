@@ -34,6 +34,148 @@ SignalPipe gives your AI agent a full sales stack — from detecting buying sign
 
 ---
 
+## Live Session Example
+
+What a typical morning lead review looks like inside your OpenClaw agent.
+
+---
+
+**You:** Show me today's leads.
+
+```
+→ signalpipe_get_missions
+```
+
+```
+3 missions pending review
+
+MISSION 1 · score: 81 · competitor_flag: true
+Product : AcmeTool
+Channel : reddit_dm
+Handle  : u/frustrated_dev99
+Snippet : "Their pricing just doubled again. Not paying for features we
+           don't use. Anyone tried alternatives for team task automation?"
+Draft   : "Hey — saw your post, had the same frustration. We built AcmeTool
+           around exactly this — no bloat, just the automation piece.
+           Happy to share how we differ if it's useful."
+
+MISSION 2 · score: 67 · competitor_flag: false
+Product : AcmeTool
+Channel : reddit_dm
+Handle  : u/ops_lead_rachel
+Snippet : "Looking for a tool to automate repetitive ops workflows.
+           Budget is flexible, need something the team actually uses."
+Draft   : "We built AcmeTool for this exact problem — teams use it without
+           training because it fits how they already work.
+           Happy to show you a real example?"
+
+MISSION 3 · score: 28 · competitor_flag: false
+Product : AcmeTool
+Channel : reddit_dm
+Handle  : u/just_browsing_thx
+Snippet : "Saw an ad for workflow tools. Not really something I need
+           right now but interesting I guess"
+Draft   : "Thanks for checking us out!"
+```
+
+**Agent:** 3 leads ready. Lead 1 is a competitor-switch signal — someone explicitly frustrated with a named competitor, score 81. Lead 2 is a direct need statement with flexible budget, score 67. Lead 3 is low-intent casual browsing, score 28 — recommend reject.
+
+Approve 1 and 2, or do you want to edit the drafts first?
+
+---
+
+**You:** Lead 1 is good, approve it. Reject lead 3. For lead 2 change the draft to: "Hey Rachel — we solve exactly this. Most ops teams are running automations within a day. Want me to show you how a team like yours uses it?"
+
+```
+→ signalpipe_approve_mission (msn_8f3a — AI draft unchanged)
+→ signalpipe_reject_mission  (msn_c44d)
+→ signalpipe_approve_mission (msn_2b91 — user-edited draft)
+```
+
+```
+✓ msn_8f3a queued for outreach
+✓ msn_c44d rejected — RL weight adjusted for this product
+✓ msn_2b91 queued for outreach (your version)
+```
+
+**Agent:** Done. Lead 3's rejection will lower the scoring weight for similar low-intent posts going forward.
+
+---
+
+**You:** Rachel just replied on Reddit — she seemed interested. Log it.
+
+```
+→ signalpipe_track_prospect
+  handle    : u/ops_lead_rachel
+  channel   : reddit_dm
+  signal    : replied
+  mission_id: msn_2b91
+```
+
+```json
+{
+  "prospect_id": "pro_7f2c",
+  "handle": "u/ops_lead_rachel",
+  "temperature": 45,
+  "mode": "sales",
+  "persona": "Consultant",
+  "follow_up_in": "2–3 days"
+}
+```
+
+**Agent:** Rachel is now in Sales mode, temperature 45. Consultant persona active — qualify and show fit, no hard sell yet.
+
+---
+
+**You:** Show me my full pipeline.
+
+```
+→ signalpipe_get_pipeline
+```
+
+```
+Pipeline: 12 prospects
+
+● Closing  (75–100)   2 prospects
+  → u/sarah_cto        temp 88   last: booked_demo
+  → u/mike_founder     temp 82   last: asked_pricing
+
+◑ Sales    (30–74)    7 prospects
+  → u/ops_lead_rachel  temp 45   last: replied       ← just added
+  → u/dev_team_james   temp 62   last: viewed_content
+  → ...
+
+○ Recovery (0–29)     3 prospects
+  → u/ghost_since_jan  temp 14   last: ghosted_7_days
+  → ...
+```
+
+**Agent:** 2 in Closing — sarah_cto booked a demo, she's your hottest follow-up. Want me to generate a message for her?
+
+---
+
+**You:** Yes. Message for sarah_cto.
+
+```
+→ signalpipe_get_message (prospect_id: pro_sarah_cto)
+```
+
+```json
+{
+  "message": "Sarah — you've seen how it works. Happy to answer any last
+              questions before your team makes a call. What's the main
+              thing you're still weighing?",
+  "tactic": "remove_friction",
+  "mode": "closing",
+  "temperature": 88,
+  "note": "Previous objection (too_expensive) on record — pricing angle avoided"
+}
+```
+
+**Agent:** Closing mode, friction-removal tactic. Her previous pricing objection is on record — the AI avoided that angle automatically. Ready to send, or want to edit?
+
+---
+
 ## Quick Start
 
 ### 1. Get a backend
@@ -80,11 +222,11 @@ Each incoming post goes through three stages:
 1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored (~85% of posts eliminated here, zero API cost)
 2. **Embedding similarity** — cosine similarity against pre-cached anchor vectors using OpenAI `text-embedding-3-small`; buyer-perspective phrases like "I need X" or "looking for alternative to Y"
 3. **Sarcasm detection** — LLM check that distinguishes genuine buyers from casual venting or irony; fails open so real leads are never suppressed
-4. **LLM swarm** — three AI judges (Skeptic 40%, Analyst 35%, Optimist 25%) evaluate independently via concurrent threads; hard skeptic veto at score < 0.3 suppresses any signal the most skeptical judge dismisses entirely
+4. **LLM swarm** — three AI judges (Skeptic, Analyst, Optimist) evaluate independently via concurrent threads; a hard skeptic veto suppresses any signal the most skeptical judge dismisses outright
 
-Competitor-switch posts are hard-floored at score 60 — they always reach your review queue regardless of general intent score.
+Competitor-switch posts are hard-floored and always reach your review queue regardless of general intent score.
 
-The final score feeds a per-product learning loop: approvals nudge the weight up (+0.05, max 2.0), rejections nudge it down (−0.02, floor 0.5). The asymmetry is intentional — conservative about boosting, aggressive about penalizing. The system gets sharper the more you use it.
+The final score feeds a per-product learning loop: approvals nudge the weight up, rejections nudge it down. The asymmetry is intentional — conservative about boosting, aggressive about penalizing. The system gets sharper the more you use it.
 
 ---
 
@@ -100,15 +242,21 @@ The Nurture Engine tracks a 0–100 temperature for each prospect:
 
 **13 signal types** map to calibrated heat deltas:
 
-| Signal | Delta | Signal | Delta |
-|---|---|---|---|
-| `booked_demo` | +20 | `not_interested` | −25 |
-| `asked_pricing` | +15 | `bad_timing` | −15 |
-| `viewed_content` | +8 | `ghosted_7_days` | −15 |
-| `replied` | +5 | `too_expensive` | −10 |
-| `clicked_link` | +3 | `competitor` | −8 |
-| `not_decision_maker` | 0 | `no_time` | −5 |
-| `ghosted_3_days` | −6 | | |
+| Signal | Direction |
+|---|---|
+| `booked_demo` | Strong positive |
+| `asked_pricing` | Strong positive |
+| `viewed_content` | Positive |
+| `replied` | Positive |
+| `clicked_link` | Positive |
+| `not_decision_maker` | Neutral |
+| `ghosted_3_days` | Negative |
+| `no_time` | Negative |
+| `competitor` | Negative |
+| `too_expensive` | Negative |
+| `not_interested` | Strong negative |
+| `bad_timing` | Strong negative |
+| `ghosted_7_days` | Strong negative |
 
 **One-directional mode transitions** — once a prospect reaches Closing, they never regress to Sales. Once in Recovery, they only re-enter Sales when they warm again. No oscillation, no spam.
 
