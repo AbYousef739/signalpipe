@@ -16,5 +16,5 @@ export default function register(api: any): void {
   registerMantidaeTools(api)
   registerCompanionTools(api)
 
-  console.log('[SignalPipe] Plugin loaded — 10 tools registered')
+  console.log('[SignalPipe] Plugin loaded — 11 tools registered')
 }

@@ -4,7 +4,7 @@
 
 SignalPipe gives your AI agent a full sales stack — from detecting buying signals on Reddit and Hacker News to closing warm prospects with context-aware messages. Works with any OpenClaw-compatible agent.
 
-[signalpipe.io](https://signalpipe.io) · [ClawHub](https://clawhub.io/plugins/signalpipe)
+[signalpipe.io](https://signalpipe.io)
 
 ---
 
@@ -16,7 +16,7 @@ SignalPipe gives your AI agent a full sales stack — from detecting buying sign
 
 ---
 
-## Tools (10 total)
+## Tools (11 total)
 
 | Tool | What it does |
 |---|---|
@@ -217,7 +217,7 @@ Ask your agent:
 
 ## How Scoring Works
 
-Each incoming post goes through three stages:
+Each incoming post goes through four stages:
 
 1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored (~85% of posts eliminated here, zero API cost)
 2. **Embedding similarity** — cosine similarity against pre-cached anchor vectors using OpenAI `text-embedding-3-small`; buyer-perspective phrases like "I need X" or "looking for alternative to Y"

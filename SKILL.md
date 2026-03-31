@@ -3,7 +3,7 @@
 SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility.**
 
-Two subsystems, ten tools. Use them in sequence.
+Two subsystems, eleven tools. Use them in sequence.
 
 ---
 
@@ -129,12 +129,13 @@ The Companion nurtures prospects from first contact to close. It tracks a **temp
 
 | Temperature | Mode | Persona |
 |---|---|---|
+| 10 (initial) | `nurture` | Educator — introduce value, no pressure |
 | 0–29 | `recovery` | Re-engager — re-spark cold leads, no hard sell |
 | 30–74 | `sales` | Consultant — qualify, show fit, build trust |
 | 75–100 | `closing` | Closer — urgency, social proof, clear CTA |
 
 New prospects start in `nurture` mode (temperature 10) until their first positive signal.
-Temperature transitions: ≥75 → closing · ≥50 → sales · <30 → recovery
+Temperature transitions: ≥75 → closing · ≥30 → sales · <30 → recovery
 
 ---
 
