@@ -4,7 +4,11 @@
   "description": "Agentic sales pipeline — detects buying-intent signals across the open internet, drafts outreach via multi-agent LLM swarm, and nurtures prospects from cold to closed — with human approval at every step.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "SKILL.md", "openclaw.plugin.json"],
+  "files": [
+    "dist",
+    "SKILL.md",
+    "openclaw.plugin.json"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -26,7 +30,7 @@
   "homepage": "https://signalpipe.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AbYousef739/signalpipe.git"
+    "url": "git+https://github.com/AbYousef739/signalpipe.git"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
