@@ -21,17 +21,27 @@ Fetch all pending missions awaiting human approval.
 - `product_name` — which product this lead is for
 - `signal_score` — 0–100 buying intent score (cosine similarity × 100, scaled by RL weight)
 - `competitor_flag` — true if a competitor was mentioned
-- `channel` — where to reach them (`twitter` | `reddit_dm` | `email` | etc.)
+- `channel` — where to reach them (`twitter_reply` | `reddit_dm` | `manual` | etc.)
 - `handle` — prospect's username/email
 - `lead_snippet` — the text that triggered the signal
+- `source_url` — direct link to the original post or tweet
 - `ai_draft` — AI-generated reply, ready to send
+
+**How to present missions to the user:**
+Always show: score · channel · handle · snippet · draft.
+For `manual` channel missions, always show the `source_url` as a clickable link — the user needs to open the original post themselves to reply. Label it clearly: "Open post → [URL]"
+For `reddit_dm` or `twitter_reply`, the sidecar handles delivery — just show the draft for approval.
 
 **Example workflow:**
 ```
 User: "Show me today's leads"
 → Call signalpipe_get_missions
-→ Present each mission: score, handle, snippet, draft
-→ Ask user to approve or reject each one
+→ For each mission present:
+    Score · Channel · Handle
+    What they said: [snippet]
+    Draft: [ai_draft]
+    (if manual) Open post → [source_url]
+→ Ask user to approve, reject, or edit each one
 ```
 
 ---
