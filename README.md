@@ -311,4 +311,10 @@ export MAX_TWITTER_ACTIONS_PER_DAY=10   # default: 10
 
 Both channels are optional. If credentials are not set, that outreach channel is silently skipped and the mission stays queued.
 
+**Auto-approve (sidecar):**
+```bash
+export AUTO_APPROVE_THRESHOLD=0.80   # fused swarm score 0.0–1.0; 0 = all manual (default)
+```
+Missions whose fused confidence score meets or exceeds this threshold are approved automatically without waiting for human review. Recommended starting value: 0.80.
+
 Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
