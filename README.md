@@ -268,9 +268,11 @@ The Nurture Engine tracks a 0–100 temperature for each prospect:
 
 | Tier | Price | Products | Leads/day | Prospects |
 |---|---|---|---|---|
-| Starter | $49/mo | 3 | 50 | 500 |
+| Starter | $49/mo | 2 | 25 | 500 |
 | Growth | $149/mo | 10 | 250 | 5,000 |
-| Scale | $399/mo | Unlimited | Unlimited | Unlimited |
+| Scale | $499/mo | Unlimited | Unlimited | Unlimited |
+
+Annual billing available on all tiers — 2 months free (17% off).
 
 [View pricing →](https://signalpipe.io/pricing)
 
