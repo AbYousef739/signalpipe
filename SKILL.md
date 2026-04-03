@@ -230,14 +230,47 @@ Get the full prospect pipeline sorted by temperature.
 
 ---
 
+## Sidecar Lifecycle
+
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), it automatically starts a background sidecar loop. You will see this in the OpenClaw logs:
+
+```
+🦐 SignalPipe sidecar ONLINE
+   Brain   : ANTHROPIC / claude-haiku-4-5-20251001
+   Twitter : ACTIVE
+   Reddit  : inactive — set REDDIT_CLIENT_ID for DMs
+   Backend : https://your-app.up.railway.app
+   Auto-approve threshold: off (all manual)
+```
+
+The sidecar polls every 60 seconds. It drafts replies using your LLM key, uploads them for your review, and executes approved missions via your Twitter/Reddit credentials. **You pay your own LLM and outreach API costs** — SignalPipe charges only for managed backend infrastructure.
+
+If no LLM key is set, the sidecar will still poll and surface leads — but drafts must be written manually.
+
+---
+
 ## Environment Variables
 
 Set before starting the OpenClaw gateway:
 
-| Variable | Description |
-|---|---|
-| `SIGNALPIPE_API_URL` | URL of your SignalPipe backend (e.g., `https://your-app.up.railway.app`) |
-| `SIGNALPIPE_OPERATOR_KEY` | Secret operator key set on your backend |
+| Variable | Required | Description |
+|---|---|---|
+| `SIGNALPIPE_API_URL` | Yes | URL of your SignalPipe backend (e.g., `https://your-app.up.railway.app`) |
+| `SIGNALPIPE_OPERATOR_KEY` | Yes | Secret operator key from your SignalPipe dashboard |
+| `ANTHROPIC_API_KEY` | One of three | Preferred LLM for sidecar drafting — Claude Haiku |
+| `OPENAI_API_KEY` | One of three | Fallback LLM — gpt-4o-mini |
+| `GEMINI_API_KEY` | One of three | Fallback LLM — gemini-2.0-flash |
+| `X_API_KEY` | Optional | Twitter/X outreach — API key |
+| `X_API_SECRET` | Optional | Twitter/X outreach — API secret |
+| `X_ACCESS_TOKEN` | Optional | Twitter/X outreach — access token |
+| `X_ACCESS_SECRET` | Optional | Twitter/X outreach — access secret |
+| `REDDIT_CLIENT_ID` | Optional | Reddit DM outreach — app client ID |
+| `REDDIT_CLIENT_SECRET` | Optional | Reddit DM outreach — app client secret |
+| `REDDIT_USERNAME` | Optional | Reddit DM outreach — account username |
+| `REDDIT_PASSWORD` | Optional | Reddit DM outreach — account password |
+| `MAX_TWITTER_ACTIONS_PER_DAY` | Optional | Daily Twitter action cap (default: 10) |
+| `MAX_REDDIT_DMS_PER_DAY` | Optional | Daily Reddit DM cap (default: 5) |
+| `AUTO_APPROVE_THRESHOLD` | Optional | Fused score 0.0–1.0 for auto-approve; 0 = all manual (default) |
 
 ---
 

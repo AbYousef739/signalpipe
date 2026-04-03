@@ -1,7 +1,7 @@
 {
   "name": "signalpipe",
-  "version": "1.0.0",
-  "description": "Agentic sales pipeline — detects buying-intent signals across the open internet, drafts outreach via multi-agent LLM swarm, and nurtures prospects from cold to closed — with human approval at every step.",
+  "version": "1.1.0",
+  "description": "Agentic sales pipeline — detects buying-intent signals across the open internet, drafts outreach via multi-agent LLM swarm (BYOK), and nurtures prospects from cold to closed. Sidecar runs inside OpenClaw — no separate deployment.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -32,8 +32,13 @@
     "type": "git",
     "url": "git+https://github.com/AbYousef739/signalpipe.git"
   },
+  "dependencies": {
+    "twitter-api-v2": "^1.17.0",
+    "snoowrap":       "^1.23.0"
+  },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "typescript":     "^5.4.0",
+    "@types/node":    "^20.0.0",
+    "@types/snoowrap": "^1.9.10"
   }
 }

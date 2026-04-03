@@ -1,8 +1,8 @@
 {
   "name": "signalpipe",
-  "version": "1.0.0",
-  "description": "Agentic sales pipeline for lead discovery and prospect nurturing",
+  "version": "1.1.0",
+  "description": "Agentic sales pipeline — signal detection, LLM-drafted outreach, and prospect nurturing. BYOK: sidecar runs inside OpenClaw using your own API keys.",
   "entry": "dist/index.js",
   "homepage": "https://signalpipe.io",
-  "tags": ["sales", "lead-generation", "agentic", "pipeline", "nurturing"]
+  "tags": ["sales", "lead-generation", "agentic", "pipeline", "nurturing", "byok", "outreach"]
 }

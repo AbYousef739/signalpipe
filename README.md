@@ -178,9 +178,9 @@ Pipeline: 12 prospects
 
 ## Quick Start
 
-### 1. Get a backend
+### 1. Get a backend + operator key
 
-**Managed (recommended):** Sign up at [signalpipe.io/pricing](https://signalpipe.io/pricing) — you get an `OPERATOR_KEY` and a backend URL instantly. No infrastructure to manage.
+**Managed (recommended):** Sign up at [signalpipe.io/pricing](https://signalpipe.io/pricing) — you get a `SIGNALPIPE_OPERATOR_KEY` and backend URL instantly. No infrastructure to manage.
 
 **Self-hosted:** See [Self-Hosting](#self-hosting) below.
 
@@ -201,13 +201,43 @@ Or add to your `openclaw.config.json`:
 
 Before starting the OpenClaw gateway:
 ```bash
+# Required — backend connection
 export SIGNALPIPE_API_URL=https://your-backend-url
 export SIGNALPIPE_OPERATOR_KEY=your-operator-key
+
+# Required — LLM drafting (bring your own key — you pay your own LLM costs)
+export ANTHROPIC_API_KEY=sk-ant-...   # preferred: Claude Haiku
+# OR
+export OPENAI_API_KEY=sk-...          # fallback: gpt-4o-mini
+# OR
+export GEMINI_API_KEY=...             # fallback: gemini-2.0-flash
+
+# Optional — outreach automation
+export X_API_KEY=...
+export X_API_SECRET=...
+export X_ACCESS_TOKEN=...
+export X_ACCESS_SECRET=...
+export REDDIT_CLIENT_ID=...
+export REDDIT_CLIENT_SECRET=...
+export REDDIT_USERNAME=...
+export REDDIT_PASSWORD=...
 ```
 
-### 4. Start using it
+### 4. Start OpenClaw — sidecar starts automatically
 
-Ask your agent:
+The plugin auto-starts a background sidecar loop when it loads. No separate deployment needed. You'll see this in the OpenClaw logs:
+
+```
+🦐 SignalPipe sidecar ONLINE
+   Brain   : ANTHROPIC / claude-haiku-4-5-20251001
+   Twitter : inactive — set X_API_KEY for auto-reply
+   Reddit  : inactive — set REDDIT_CLIENT_ID for DMs
+   Backend : https://your-backend.up.railway.app
+   Auto-approve threshold: off (all manual)
+```
+
+### 5. Ask your agent
+
 - "Show me my pending leads"
 - "Add my SaaS tool as a product to monitor"
 - "Who should I follow up with today?"
@@ -266,11 +296,14 @@ The Nurture Engine tracks a 0–100 temperature for each prospect:
 
 ## Managed Backend Tiers
 
-| Tier | Price | Products | Leads/day | Prospects |
-|---|---|---|---|---|
-| Starter | $49/mo | 2 | 25 | 500 |
-| Growth | $149/mo | 10 | 250 | 5,000 |
-| Scale | $499/mo | Unlimited | Unlimited | Unlimited |
+All tiers are BYOK — you bring your own LLM key (Anthropic / OpenAI / Gemini) and your own Reddit/Twitter credentials. You pay your own LLM and API costs. SignalPipe charges only for managed backend infrastructure.
+
+| Tier | Price | Products | Leads/day | Prospects | Notes |
+|---|---|---|---|---|---|
+| BYOK | $19/mo | 3 | 50 | 1,000 | Sidecar + managed backend, you supply all keys |
+| Starter | $49/mo | 2 | 25 | 500 | Managed backend, embeddings included |
+| Growth | $149/mo | 10 | 250 | 5,000 | Priority queue, Slack support |
+| Scale | $499/mo | Unlimited | Unlimited | Unlimited | Dedicated instance, white-glove onboarding |
 
 Annual billing available on all tiers — 2 months free (17% off).
 
@@ -285,38 +318,44 @@ Backend: Business Source License 1.1 (converts to Apache 2.0 after 4 years)
 
 ---
 
+## How the Sidecar Works
+
+The plugin ships with a built-in sidecar that starts automatically inside your OpenClaw process. No separate deployment. No Python. No Railway.
+
+**What it does every 60 seconds:**
+1. Polls your SignalPipe backend for missions with status `draft_needed`
+2. Fires a 3-persona LLM swarm (Optimist · Skeptic · Analyst) using your own LLM key
+3. Uploads the fused draft back to the backend for your review
+4. When you approve a mission, executes outreach via your Twitter or Reddit credentials
+
+**LLM swarm fusion (BYOK — your key, your cost):**
+- Skeptic 40% · Analyst 35% · Optimist 25%
+- Hard gate: Skeptic score < 0.3 → suppressed entirely
+- Draft threshold: fused score < 0.40 → skipped
+- Provider priority: Anthropic Claude Haiku → OpenAI gpt-4o-mini → Gemini 2.0 Flash
+
+**Outreach rate limits:**
+```bash
+export MAX_TWITTER_ACTIONS_PER_DAY=10   # default: 10
+export MAX_REDDIT_DMS_PER_DAY=5         # default: 5
+```
+
+**Auto-approve:**
+```bash
+export AUTO_APPROVE_THRESHOLD=0.80   # fused swarm score 0.0–1.0; 0 = all manual (default)
+```
+Missions whose fused confidence score meets or exceeds this threshold are approved automatically without waiting for human review. Recommended starting value: 0.80.
+
+---
+
 ## Self-Hosting
 
 The backend is a FastAPI app. You will need:
 - Python 3.11+
 - PostgreSQL with `pg_cron` and `pg_net` extensions (Supabase recommended)
 - A host that supports long-running processes (Railway recommended)
-- OpenAI API key (embeddings) and Anthropic API key (message generation)
+- OpenAI API key (embeddings)
 
-The sidecar handles outreach execution. Set these to enable each channel:
-
-**Reddit DM outreach:**
-```bash
-export REDDIT_CLIENT_ID=your_reddit_app_id
-export REDDIT_CLIENT_SECRET=your_reddit_app_secret
-export MAX_REDDIT_DMS_PER_DAY=5   # default: 5
-```
-
-**Twitter / X reply outreach** (requires X API Basic tier or above):
-```bash
-export X_API_KEY=your_x_api_key
-export X_API_SECRET=your_x_api_secret
-export X_ACCESS_TOKEN=your_access_token
-export X_ACCESS_SECRET=your_access_token_secret
-export MAX_TWITTER_ACTIONS_PER_DAY=10   # default: 10
-```
-
-Both channels are optional. If credentials are not set, that outreach channel is silently skipped and the mission stays queued.
-
-**Auto-approve (sidecar):**
-```bash
-export AUTO_APPROVE_THRESHOLD=0.80   # fused swarm score 0.0–1.0; 0 = all manual (default)
-```
-Missions whose fused confidence score meets or exceeds this threshold are approved automatically without waiting for human review. Recommended starting value: 0.80.
+The sidecar runs inside the OpenClaw plugin — no separate backend sidecar needed.
 
 Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
