@@ -66,11 +66,16 @@ export class UniversalBrain {
 
   // ── Single LLM call ──────────────────────────────────────────────────────
 
+  private static readonly LLM_TIMEOUT_MS = 30_000  // 30 seconds for LLM calls
+
   private async generate(
     systemPrompt: string,
     userContent:  string,
   ): Promise<SwarmResult | null> {
     if (!this.provider) return null
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), UniversalBrain.LLM_TIMEOUT_MS)
 
     try {
       if (this.provider === 'anthropic') {
@@ -87,7 +92,12 @@ export class UniversalBrain {
             system:     systemPrompt + '\n\n' + JSON_SCHEMA,
             messages:   [{ role: 'user', content: userContent }],
           }),
+          signal: controller.signal,
         })
+        if (!res.ok) {
+          console.error(`   ⚠️  Anthropic ${res.status}: ${await res.text()}`)
+          return null
+        }
         const data = await res.json() as any
         return JSON.parse(data.content[0].text) as SwarmResult
       }
@@ -107,7 +117,12 @@ export class UniversalBrain {
               { role: 'user',   content: userContent },
             ],
           }),
+          signal: controller.signal,
         })
+        if (!res.ok) {
+          console.error(`   ⚠️  OpenAI ${res.status}: ${await res.text()}`)
+          return null
+        }
         const data = await res.json() as any
         return JSON.parse(data.choices[0].message.content) as SwarmResult
       }
@@ -124,7 +139,12 @@ export class UniversalBrain {
               }],
             }],
           }),
+          signal: controller.signal,
         })
+        if (!res.ok) {
+          console.error(`   ⚠️  Gemini ${res.status}: ${await res.text()}`)
+          return null
+        }
         const data = await res.json() as any
         let text: string = data.candidates[0].content.parts[0].text.trim()
         if (text.startsWith('```')) {
@@ -136,8 +156,14 @@ export class UniversalBrain {
         if (start > 0) text = text.slice(start)
         return JSON.parse(text) as SwarmResult
       }
-    } catch (e) {
-      console.error(`   ⚠️  LLM error (${this.provider}):`, e)
+    } catch (e: any) {
+      if (e?.name === 'AbortError') {
+        console.error(`   ⚠️  LLM timeout (${this.provider}): exceeded ${UniversalBrain.LLM_TIMEOUT_MS / 1000}s`)
+      } else {
+        console.error(`   ⚠️  LLM error (${this.provider}):`, e)
+      }
+    } finally {
+      clearTimeout(timer)
     }
 
     return null

@@ -67,10 +67,11 @@ Reject a mission — it was not a real buying signal.
 
 **When to call:** User says "skip", "not relevant", "bad lead", "reject".
 
-**Effect:** Nudges the RL weight down so similar leads score lower in future.
+**Effect:** Sets the mission status to rejected and nudges the RL weight down. The penalty adapts to the rejection reason — spam is penalized hardest, sarcasm and wrong-product are gentle, "already a customer" carries zero penalty.
 
 **Parameters:**
 - `mission_id` (required)
+- `rejection_reason` (optional) — why the lead was bad: `not_relevant` | `sarcasm` | `wrong_product` | `spam` | `too_vague` | `already_customer` | `no_reason` (default). If the user says why they're rejecting, pass the closest reason.
 
 ---
 

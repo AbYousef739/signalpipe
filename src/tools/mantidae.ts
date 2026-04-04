@@ -55,16 +55,22 @@ export function registerMantidaeTools(openClaw: any): void {
     name: 'signalpipe_reject_mission',
     description:
       'Reject a lead mission — it was not a real buying signal. ' +
-      'This nudges the RL weight down for that product so similar leads ' +
-      'score lower in future scouting runs.',
+      'This updates the mission status to rejected and nudges the RL weight down ' +
+      'for that product so similar leads score lower in future scouting runs. ' +
+      'Optionally accepts a rejection reason for smarter learning.',
     parameters: {
       mission_id: {
         type: 'string',
         description: 'The mission ID to reject',
       },
+      rejection_reason: {
+        type: 'string',
+        description: 'Why this lead was rejected: not_relevant | sarcasm | wrong_product | spam | too_vague | already_customer | no_reason',
+        optional: true,
+      },
     },
-    execute: async ({ mission_id }: { mission_id: string }) => {
-      await api.post('/feedback/record', { mission_id, outcome: 'ignored' })
+    execute: async ({ mission_id, rejection_reason }: { mission_id: string; rejection_reason?: string }) => {
+      await api.post('/actions/reject', { id: mission_id, rejection_reason: rejection_reason || 'no_reason' })
       return { status: 'rejected', mission_id }
     },
   })

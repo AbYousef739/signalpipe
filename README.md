@@ -22,7 +22,7 @@ SignalPipe gives your AI agent a full sales stack — from detecting buying sign
 |---|---|
 | `signalpipe_get_missions` | Fetch pending leads awaiting review |
 | `signalpipe_approve_mission` | Approve a lead and queue for outreach |
-| `signalpipe_reject_mission` | Reject a lead (improves RL scoring) |
+| `signalpipe_reject_mission` | Reject a lead with optional reason (adaptive RL penalty) |
 | `signalpipe_scout_now` | Trigger an immediate scouting run |
 | `signalpipe_get_products` | List active monitored products |
 | `signalpipe_add_product` | Register a new product for lead monitoring |

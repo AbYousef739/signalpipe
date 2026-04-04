@@ -50,22 +50,34 @@ function apiHeaders(): Record<string, string> {
   }
 }
 
+const API_TIMEOUT_MS = 10_000  // 10 seconds for backend calls
+
 async function callAPI(
   method: string,
   path:   string,
   body?:  object,
 ): Promise<any> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+
   try {
     const res = await fetch(`${API_URL}${path}`, {
       method,
       headers: apiHeaders(),
       body:    body ? JSON.stringify(body) : undefined,
+      signal:  controller.signal,
     })
     const text = await res.text()
     try { return JSON.parse(text) } catch { return text }
-  } catch (e) {
-    console.error(`   ⚠️  API error [${method} ${path}]:`, e)
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      console.error(`   ⚠️  API timeout [${method} ${path}]: exceeded ${API_TIMEOUT_MS / 1000}s`)
+    } else {
+      console.error(`   ⚠️  API error [${method} ${path}]:`, e)
+    }
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 
