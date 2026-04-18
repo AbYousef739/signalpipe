@@ -1,0 +1,24 @@
+{
+  "id": "signalpipe",
+  "name": "SignalPipe",
+  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies, and nurtures prospects from cold to closed. Fully managed backend — just install and set your keys.",
+  "humanInLoop": true,
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["apiUrl", "operatorKey"],
+    "properties": {
+      "apiUrl": {
+        "type": "string",
+        "env": "SIGNALPIPE_API_URL",
+        "description": "SignalPipe backend URL — set via SIGNALPIPE_API_URL env var"
+      },
+      "operatorKey": {
+        "type": "string",
+        "sensitive": true,
+        "env": "SIGNALPIPE_OPERATOR_KEY",
+        "description": "SignalPipe operator key — set via SIGNALPIPE_OPERATOR_KEY env var"
+      }
+    }
+  }
+}

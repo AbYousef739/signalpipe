@@ -1,0 +1,61 @@
+{
+  "name": "signalpipe",
+  "version": "1.3.2",
+  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies via managed backend, and nurtures prospects from cold to closed.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "SKILL.md",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "openclaw",
+    "clawhub",
+    "agentic",
+    "lead-generation",
+    "sales-pipeline",
+    "human-in-the-loop",
+    "signal-detection",
+    "prospect-nurturing"
+  ],
+  "author": "SignalPipe <contact@signalpipe.io>",
+  "license": "MIT",
+  "homepage": "https://signalpipe.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbYousef739/signalpipe.git"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.49"
+  },
+  "openclaw": {
+    "extensions": ["./dist/index.js"],
+    "requires": {
+      "env": [
+        "SIGNALPIPE_API_URL",
+        "SIGNALPIPE_OPERATOR_KEY"
+      ]
+    },
+    "compat": {
+      "pluginApi": ">=2026.4.5",
+      "minGatewayVersion": "2026.4.5"
+    },
+    "build": {
+      "openclawVersion": "2026.4.5",
+      "pluginSdkVersion": "2026.4.5"
+    }
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
