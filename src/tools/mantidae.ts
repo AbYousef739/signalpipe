@@ -11,6 +11,25 @@ function err(e: unknown): ToolResult {
   return { content: [{ type: 'text', text: String(e) }], isError: true }
 }
 
+// Tight enums — give the model a closed list so it can't invent values
+// that the backend silently treats as 'no_reason' / defaults.
+const RejectionReason = Type.Union([
+  Type.Literal('not_relevant'),
+  Type.Literal('sarcasm'),
+  Type.Literal('wrong_product'),
+  Type.Literal('spam'),
+  Type.Literal('too_vague'),
+  Type.Literal('already_customer'),
+  Type.Literal('no_reason'),
+])
+
+const StationPlatform = Type.Union([
+  Type.Literal('rss'),
+  Type.Literal('hn'),
+  Type.Literal('reddit'),
+  Type.Literal('twitter_search'),
+])
+
 /**
  * Mantidae acquisition tools.
  * Covers the top-of-funnel: signal detection → mission review → approve/reject.
@@ -57,9 +76,7 @@ export function registerMantidaeTools(openClaw: any): void {
       'Updates status to rejected and nudges the RL weight down for that product.',
     parameters: Type.Object({
       mission_id: Type.String({ description: 'The mission ID to reject' }),
-      rejection_reason: Type.Optional(Type.String({
-        description: 'Why this lead was rejected: not_relevant | sarcasm | wrong_product | spam | too_vague | already_customer | no_reason',
-      })),
+      rejection_reason: Type.Optional(RejectionReason),
     }),
     async execute(_id: string, params: { mission_id: string; rejection_reason?: string }) {
       try {
@@ -119,7 +136,7 @@ export function registerMantidaeTools(openClaw: any): void {
     parameters: Type.Object({
       product_id: Type.String({ description: 'Product ID to attach this station to' }),
       name:       Type.String({ description: 'Friendly name for this station' }),
-      platform:   Type.String({ description: 'Source type: rss | hn | reddit | twitter_search' }),
+      platform:   StationPlatform,
       rss_url:    Type.Optional(Type.String({ description: 'Full RSS feed URL' })),
       keyword:    Type.Optional(Type.String({ description: 'Primary keyword context for this feed' })),
     }),
