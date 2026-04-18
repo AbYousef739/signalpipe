@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies via managed backend, and nurtures prospects from cold to closed.
-version: 1.3.2
+version: 1.3.3
 metadata:
   openclaw:
     requires:
@@ -34,7 +34,7 @@ Fetch all pending missions awaiting human approval.
 **Returns:** Array of missions, each with:
 - `id` — mission ID (use for approve/reject)
 - `product_name` — which product this lead is for
-- `signal_score` — 0–100 buying intent score (cosine similarity × 100, scaled by RL weight)
+- `signal_score` — 0–100 buying-intent score, adaptive based on your approval/rejection history
 - `competitor_flag` — true if a competitor was mentioned
 - `channel` — where to reach them (`twitter_reply` | `reddit_dm` | `manual` | etc.)
 - `handle` — prospect's username/email

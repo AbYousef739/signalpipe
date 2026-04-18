@@ -224,14 +224,14 @@ SignalPipe runs two sequential pipelines on every incoming post.
 **Pipeline 1 — Scoring (backend):**
 
 1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored (~85% of posts eliminated here, zero API cost)
-2. **Multi-factor semantic scoring** — geometric mean fusion of embedding similarity (50%), urgency (20%), specificity (15%), and keyword density (15%) using OpenAI `text-embedding-3-small`; catches buyer intent even when exact keywords aren't used
+2. **Multi-factor semantic scoring** — multi-factor analysis combining embedding similarity, urgency, specificity, and keyword density; catches buyer intent even when exact keywords aren't used
 3. **Sarcasm detection** — LLM check that distinguishes genuine buyers from casual venting or irony; fails open so real leads are never suppressed
 
 **Pipeline 2 — Drafting (managed backend):**
 
 Posts that survive scoring are passed to a 3-judge AI swarm running on the SignalPipe backend:
-- **Skeptic (40%)** · **Analyst (35%)** · **Optimist (25%)** — evaluate the lead independently
-- Hard gate: Skeptic score < 0.3 → lead suppressed, no draft written
+- Skeptic · Analyst · Optimist — evaluate the lead independently via ensemble weighting
+- Low-intent leads are suppressed before a draft is written
 - Analyst draft used by default; Optimist as fallback
 - The swarm writes the reply — it does not affect the intent score
 
