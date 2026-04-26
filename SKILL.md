@@ -1,7 +1,7 @@
 ---
 name: signalpipe
-description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies via managed backend, and nurtures prospects from cold to closed.
-version: 1.3.3
+description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed.
+version: 1.4.0
 metadata:
   openclaw:
     requires:
@@ -18,7 +18,9 @@ metadata:
 SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility.**
 
-Two subsystems, eleven tools. Use them in sequence.
+Two subsystems, fifteen tools. Use them in sequence.
+
+> **v1.4.0 — Client-side drafting.** Mission drafts and prospect messages can now be generated using YOUR LLM (the one running this plugin) instead of the SignalPipe backend. Use `signalpipe_draft_mission` + `signalpipe_upload_draft` for missions, and `signalpipe_get_message_prompt` + `signalpipe_record_message` for prospect nurture. The server-side equivalents (`signalpipe_get_missions` shows drafts already produced by the backend; `signalpipe_get_message` calls the backend LLM) still work — pick whichever fits the situation.
 
 ---
 
@@ -248,7 +250,7 @@ Get the full prospect pipeline sorted by temperature.
 
 ## Backend Lifecycle
 
-When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 11 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 15 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
 🦐 SignalPipe ONLINE

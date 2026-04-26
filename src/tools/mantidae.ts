@@ -40,12 +40,110 @@ export function registerMantidaeTools(openClaw: any): void {
     name: 'signalpipe_get_missions',
     description:
       'Fetch all pending lead missions awaiting human review. ' +
-      'Returns missions with signal scores, product names, AI-drafted replies, ' +
+      'Returns missions with signal scores, product names, drafted replies, ' +
       'competitor flags, outreach channels, and lead snippets. ' +
+      'Undrafted missions also include a `draft_context` block with product info, ' +
+      'lead text, and response schema — feed it to signalpipe_draft_mission to ' +
+      'generate a draft client-side. ' +
       'Call this when the user asks to review leads, check the pipeline, or see what needs attention.',
     parameters: Type.Object({}),
     async execute(_id: string) {
-      try { return ok(await api.get('/sync/missions')) } catch (e) { return err(e) }
+      try { return ok(await api.get('/sync/missions?include=draft_context')) } catch (e) { return err(e) }
+    },
+  })
+
+  openClaw.registerTool({
+    name: 'signalpipe_draft_mission',
+    description:
+      'Draft a reply for a mission CLIENT-SIDE using your own LLM reasoning. ' +
+      'Fetches the mission context (product info, anchors, lead text, competitor signals) ' +
+      'and returns drafting instructions. Evaluate the lead from multiple perspectives ' +
+      '(is it a real buying signal? where is the fit? what is the most helpful opening?), ' +
+      'then call signalpipe_upload_draft with your final draft. ' +
+      'If the lead is clearly not a buying signal, call signalpipe_reject_mission instead.',
+    parameters: Type.Object({
+      mission_id: Type.String({ description: 'Mission ID to draft for (must be in draft_needed state)' }),
+    }),
+    async execute(_id: string, params: { mission_id: string }) {
+      try {
+        const res = (await api.get('/sync/missions?include=draft_context')) as {
+          missions?: Array<{ id: string; status: string; draft_context?: Record<string, unknown> }>
+        }
+        const mission = (res?.missions || []).find((m) => m.id === params.mission_id)
+        if (!mission) return err('Mission not found in the current queue.')
+        const ctx = mission.draft_context as
+          | { product: { name?: string; value_prop?: string; target_audience?: string; anchors?: string[] };
+              lead:    { title?: string; snippet?: string; url?: string; author_handle?: string; platform?: string;
+                         competitor?: { name?: string; intent?: string } | null };
+              response_schema: Record<string, string> }
+          | undefined
+        if (!ctx) {
+          return err(`Mission ${params.mission_id} has no draft_context — already drafted, approved, or rejected.`)
+        }
+
+        const anchorList = (ctx.product.anchors || []).map((a) => `    - "${a}"`).join('\n') || '    (none)'
+        const competitor = ctx.lead.competitor
+          ? `  competitor mention: ${ctx.lead.competitor.name} (intent: ${ctx.lead.competitor.intent || 'neutral'})\n`
+          : ''
+
+        const instructions =
+          `Evaluate this buying-signal lead and write one reply draft.\n\n` +
+          `PRODUCT\n` +
+          `  name:            ${ctx.product.name || '(unnamed)'}\n` +
+          `  value_prop:      ${ctx.product.value_prop || '(none)'}\n` +
+          `  target_audience: ${ctx.product.target_audience || '(none)'}\n` +
+          `  buyer anchors:\n${anchorList}\n\n` +
+          `LEAD (platform: ${ctx.lead.platform || 'unknown'})\n` +
+          `  title:  ${ctx.lead.title || '(none)'}\n` +
+          `  author: ${ctx.lead.author_handle || '(unknown)'}\n` +
+          `  url:    ${ctx.lead.url || ''}\n` +
+          `  body:   ${ctx.lead.snippet || ''}\n` +
+          competitor +
+          `\nTASK\n` +
+          `  1. Think briefly from three angles: skeptical (is this real?), analytical ` +
+          `(where does the product fit the stated need?), optimistic (what is the most ` +
+          `helpful natural opening?).\n` +
+          `  2. If it is NOT a genuine buying signal (sarcasm, off-topic, unrelated), ` +
+          `call signalpipe_reject_mission with a rejection_reason and stop.\n` +
+          `  3. Otherwise produce ONE final reply draft that:\n` +
+          `     - is under 280 characters\n` +
+          `     - opens with genuine help, not a pitch\n` +
+          `     - never starts with 'I' or the product name\n` +
+          `     - avoids exclamation marks\n` +
+          `     - mentions the product only if it naturally fits the lead's need\n` +
+          `  4. Call signalpipe_upload_draft with:\n` +
+          `       mission_id = "${params.mission_id}"\n` +
+          `       draft      = "<your final draft>"\n` +
+          `       reasoning  = "<one sentence — why this lead is a fit>"`
+        return ok({
+          mission_id: params.mission_id,
+          draft_instructions: instructions,
+          context: ctx,
+        })
+      } catch (e) { return err(e) }
+    },
+  })
+
+  openClaw.registerTool({
+    name: 'signalpipe_upload_draft',
+    description:
+      'Upload a client-generated reply draft to a mission. Use after signalpipe_draft_mission. ' +
+      'The mission transitions to pending_approval state and will appear for human review. ' +
+      'Optionally include a disagreement score [0..1] if you ran multi-persona evaluation.',
+    parameters: Type.Object({
+      mission_id:   Type.String({ description: 'Mission ID from signalpipe_draft_mission' }),
+      draft:        Type.String({ description: 'Final reply draft (under 280 chars)' }),
+      reasoning:    Type.Optional(Type.String({ description: 'One-sentence justification (for audit log)' })),
+      disagreement: Type.Optional(Type.Number({ description: 'Max-min across persona scores, 0..1' })),
+    }),
+    async execute(_id: string, params: { mission_id: string; draft: string; reasoning?: string; disagreement?: number }) {
+      try {
+        const body: Record<string, unknown> = { id: params.mission_id, content: params.draft }
+        if (typeof params.disagreement === 'number') body.disagreement = params.disagreement
+        if (params.reasoning) body.reasoning = params.reasoning
+        await api.post('/actions/upload_draft', body)
+        return ok({ status: 'uploaded', mission_id: params.mission_id })
+      } catch (e) { return err(e) }
     },
   })
 

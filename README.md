@@ -307,6 +307,6 @@ The backend is a FastAPI app. You will need:
 - A host that supports long-running processes (Railway recommended)
 - OpenAI API key (embeddings)
 
-The plugin registers 11 tools inside OpenClaw — no sidecar or separate process needed client-side.
+The plugin registers 15 tools inside OpenClaw — no sidecar or separate process needed client-side. v1.4.0 adds client-side drafting (`signalpipe_draft_mission`, `signalpipe_upload_draft`, `signalpipe_get_message_prompt`, `signalpipe_record_message`) so message generation can run on the host LLM instead of the backend.
 
 Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
