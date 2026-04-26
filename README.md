@@ -202,7 +202,7 @@ Or add to your `openclaw.config.json`:
 Before starting the OpenClaw gateway:
 ```bash
 # Required — backend connection
-export SIGNALPIPE_API_URL=https://your-backend-url
+export SIGNALPIPE_API_URL=https://api.signalpipe.io
 export SIGNALPIPE_OPERATOR_KEY=your-operator-key
 ```
 

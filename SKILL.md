@@ -254,8 +254,8 @@ When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), th
 
 ```
 🦐 SignalPipe ONLINE
-   Backend : https://your-app.up.railway.app
-   Tools   : 11 registered (Mantidae + Nurture Engine)
+   Backend : https://api.signalpipe.io
+   Tools   : 15 registered (Mantidae + Nurture Engine)
    Status  : connected
 ```
 
@@ -304,7 +304,7 @@ If a tool call returns an error, follow this decision tree before doing anything
 - Tell the user: *"The AI couldn't generate a custom message — this is a fallback. You can send it as-is or write your own."*
 
 ### Backend unreachable (network timeout / connection refused)
-- Do not loop-retry. Tell the user once: *"SignalPipe backend is not responding. Please check Railway deployment status."*
+- Do not loop-retry. Tell the user once: *"SignalPipe backend is not responding. Please check your backend deployment status at api.signalpipe.io/health."*
 
 ---
 

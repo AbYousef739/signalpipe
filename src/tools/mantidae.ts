@@ -34,7 +34,7 @@ const StationPlatform = Type.Union([
  * Mantidae acquisition tools.
  * Covers the top-of-funnel: signal detection → mission review → approve/reject.
  */
-export function registerMantidaeTools(openClaw: any): void {
+export function registerAcquisitionTools(openClaw: any): void {
 
   openClaw.registerTool({
     name: 'signalpipe_get_missions',
