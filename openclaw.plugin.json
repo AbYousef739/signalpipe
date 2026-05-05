@@ -1,7 +1,7 @@
 {
   "id": "signalpipe",
   "name": "SignalPipe",
-  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed. Fully managed backend — just install and set your keys.",
+  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts outreach for Reddit and X/Twitter, and nurtures prospects from cold to closed. Requires SIGNALPIPE_API_URL and SIGNALPIPE_OPERATOR_KEY. humanInLoop: true — nothing sends without your approval.",
   "humanInLoop": true,
   "configSchema": {
     "type": "object",
