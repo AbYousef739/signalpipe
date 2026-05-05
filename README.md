@@ -1,8 +1,8 @@
 # SignalPipe
 
-**Agentic sales pipeline for AI-powered lead discovery and prospect nurturing.**
+**Agentic sales pipeline — buying-intent detection, swarm-scored lead qualification, and prospect nurturing for OpenClaw agents.**
 
-SignalPipe gives your AI agent a full sales stack — from detecting buying signals on Reddit and Hacker News to closing warm prospects with context-aware messages. Works with any OpenClaw-compatible agent.
+SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configure for people publicly expressing buying intent. A 3-judge AI swarm evaluates every signal, calibrates the reply to the signal strength, and surfaces only real leads for your approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude.ai, Cursor, or Windsurf.
 
 [signalpipe.io](https://signalpipe.io)
 
@@ -10,33 +10,69 @@ SignalPipe gives your AI agent a full sales stack — from detecting buying sign
 
 ## What It Does
 
-**Top of funnel (Mantidae):** Continuously scouts RSS feeds, Reddit, and Hacker News for posts matching your products' buying-intent profiles. The managed backend scores each signal, drafts a reply, and surfaces only the best leads for human approval.
+**Top of funnel — Signal Acquisition (Mantidae):**
+Scouts Reddit, Hacker News, X/Twitter, and custom RSS feeds every cycle. Every post passes through a 3-stage scoring filter — keyword gate, multi-factor semantic scoring, sarcasm detection — then reaches a 3-judge AI drafting swarm: Skeptic, Analyst, Optimist. Each judge scores the lead independently. The swarm fuses their scores and suppresses low-intent posts automatically. Only leads that clear the swarm reach your queue — with a draft already calibrated to how hot the signal is:
 
-**Mid/bottom of funnel (Nurture Engine):** Tracks every prospect's temperature (0–100), automatically selects the right persona (Educator → Consultant → Closer → Re-engager), and generates the next message when you ask. Remembers objections, respects timing, and never spams.
+- **Score > 80 (Closer):** Direct, action-oriented reply — proposes a concrete next step
+- **Score 61–80 (Advisor):** Consultative — acknowledges the problem, introduces the product naturally
+- **Score 40–60 (Educator):** Value-first — leads with a genuine insight, mentions the product only if it fits
+
+Competitor-switch posts are hard-floored and always reach your queue regardless of score.
+
+**Mid/bottom of funnel — Nurture Engine:**
+Tracks every prospect's temperature (0–100) across 13 signal types. Automatically selects the right persona (Educator → Consultant → Closer → Re-engager). Remembers objections permanently — if someone said the price is too high, that angle is never repeated. Never spams. One-directional mode transitions.
 
 ---
 
-## Tools (11 total)
+## Tools (15 total)
+
+### Signal Acquisition
 
 | Tool | What it does |
 |---|---|
-| `signalpipe_get_missions` | Fetch pending leads awaiting review |
-| `signalpipe_approve_mission` | Approve a lead and queue for outreach |
-| `signalpipe_reject_mission` | Reject a lead with optional reason (adaptive RL penalty) |
-| `signalpipe_scout_now` | Trigger an immediate scouting run |
-| `signalpipe_get_products` | List active monitored products |
-| `signalpipe_add_product` | Register a new product for lead monitoring |
-| `signalpipe_add_station` | Add an RSS/Reddit/HN feed for a product |
-| `signalpipe_reload_products` | Hot-reload product cache after changes |
-| `signalpipe_track_prospect` | Log a prospect signal, update temperature |
-| `signalpipe_get_message` | Generate the next outreach message |
-| `signalpipe_get_pipeline` | View full prospect pipeline sorted by heat |
+| `signalpipe_get_missions` | Fetch pending leads awaiting review — includes swarm score, role verdict, and drafted reply |
+| `signalpipe_draft_mission` | Get drafting instructions for a mission so the host LLM can write the reply itself (BYOK path) |
+| `signalpipe_upload_draft` | Upload a host-LLM-written draft to a mission |
+| `signalpipe_approve_mission` | Approve a lead and queue it for outreach |
+| `signalpipe_reject_mission` | Reject a lead with a reason — adjusts per-product RL scoring weight |
+| `signalpipe_scout_now` | Trigger an on-demand scouting run across all active products |
+| `signalpipe_get_products` | List all configured products |
+| `signalpipe_add_product` | Register a new product to monitor — describe it in buyer language |
+| `signalpipe_add_station` | Add an RSS feed, subreddit, or HN keyword feed for a product |
+| `signalpipe_reload_products` | Hot-reload product cache after changes — no redeploy needed |
+
+### Nurture Engine
+
+| Tool | What it does |
+|---|---|
+| `signalpipe_track_prospect` | Log a signal from a prospect, update their temperature |
+| `signalpipe_get_message` | Generate the next outreach message via the backend LLM |
+| `signalpipe_get_message_prompt` | Get the full prompt + context so the host LLM writes the message (BYOK path) |
+| `signalpipe_record_message` | Record a host-LLM-written message as sent |
+| `signalpipe_get_pipeline` | View the full prospect pipeline sorted by temperature |
+
+---
+
+## MCP Support
+
+SignalPipe exposes all tools as an MCP server — no OpenClaw plugin install needed.
+
+Connect from Claude.ai → Settings → Integrations → Add MCP Server:
+```
+https://api.signalpipe.io/mcp/sse
+```
+Auth: `Authorization: Bearer YOUR_OPERATOR_KEY`
+
+Also works with Cursor (Settings → MCP) and Windsurf. Once connected, ask your agent:
+- *"Show me my leads"*
+- *"Reject the first one — it's a founder promoting their own tool"*
+- *"Who should I follow up with today?"*
 
 ---
 
 ## Live Session Example
 
-What a typical morning lead review looks like inside your OpenClaw agent.
+A typical morning lead review inside your OpenClaw agent or Claude.ai via MCP.
 
 ---
 
@@ -49,60 +85,53 @@ What a typical morning lead review looks like inside your OpenClaw agent.
 ```
 3 missions pending review
 
-MISSION 1 · score: 81 · competitor_flag: true
+MISSION 1 · score: 91 · role: CLOSER · competitor_flag: true
 Product : AcmeTool
 Channel : reddit_dm
 Handle  : u/frustrated_dev99
-Snippet : "Their pricing just doubled again. Not paying for features we
-           don't use. Anyone tried alternatives for team task automation?"
-Draft   : "Hey — saw your post, had the same frustration. We built AcmeTool
-           around exactly this — no bloat, just the automation piece.
-           Happy to share how we differ if it's useful."
+Snippet : "Their pricing just doubled again. Done. Need a replacement ASAP."
+Draft   : "Saw your post — we built AcmeTool for exactly the gap you're
+           describing. Teams typically switch in under a week. Worth a
+           quick look? Happy to show you how it compares."
 
-MISSION 2 · score: 67 · competitor_flag: false
+MISSION 2 · score: 68 · role: ADVISOR · competitor_flag: false
 Product : AcmeTool
 Channel : reddit_dm
 Handle  : u/ops_lead_rachel
 Snippet : "Looking for a tool to automate repetitive ops workflows.
            Budget is flexible, need something the team actually uses."
-Draft   : "We built AcmeTool for this exact problem — teams use it without
-           training because it fits how they already work.
-           Happy to show you a real example?"
+Draft   : "The part about 'something the team actually uses' is the real
+           problem to solve — most tools fail there, not on features.
+           AcmeTool is built around that constraint. Happy to walk through
+           a real team setup if useful."
 
-MISSION 3 · score: 28 · competitor_flag: false
+MISSION 3 · score: 24 · role: EDUCATOR · competitor_flag: false
 Product : AcmeTool
 Channel : reddit_dm
 Handle  : u/just_browsing_thx
-Snippet : "Saw an ad for workflow tools. Not really something I need
-           right now but interesting I guess"
-Draft   : "Thanks for checking us out!"
+Snippet : "Saw an ad for workflow tools. Not really something I need right now"
+Draft   : [Swarm low-confidence — auto-rejected]
 ```
 
-**Agent:** 3 leads ready. Lead 1 is a competitor-switch signal — someone explicitly frustrated with a named competitor, score 81. Lead 2 is a direct need statement with flexible budget, score 67. Lead 3 is low-intent casual browsing, score 28 — recommend reject.
-
-Approve 1 and 2, or do you want to edit the drafts first?
+**Agent:** 2 leads ready. Lead 1 is a competitor-switch signal, score 91 — Closer draft, proposes a direct next step. Lead 2 is a genuine need with flexible budget, score 68 — Advisor draft, leads with their real problem. Lead 3 was auto-rejected by the swarm. Approve 1 and 2, or edit first?
 
 ---
 
-**You:** Lead 1 is good, approve it. Reject lead 3. For lead 2 change the draft to: "Hey Rachel — we solve exactly this. Most ops teams are running automations within a day. Want me to show you how a team like yours uses it?"
+**You:** Lead 1 is good, approve it. For lead 2 change the draft to: "Hey Rachel — we solve exactly this. Most ops teams are running automations within a day. Want me to show you how a team like yours uses it?"
 
 ```
-→ signalpipe_approve_mission (msn_8f3a — AI draft unchanged)
-→ signalpipe_reject_mission  (msn_c44d)
+→ signalpipe_approve_mission (msn_8f3a — swarm draft unchanged)
 → signalpipe_approve_mission (msn_2b91 — user-edited draft)
 ```
 
 ```
 ✓ msn_8f3a queued for outreach
-✓ msn_c44d rejected — RL weight adjusted for this product
 ✓ msn_2b91 queued for outreach (your version)
 ```
 
-**Agent:** Done. Lead 3's rejection will lower the scoring weight for similar low-intent posts going forward.
-
 ---
 
-**You:** Rachel just replied on Reddit — she seemed interested. Log it.
+**You:** Rachel just replied — she's interested. Log it.
 
 ```
 → signalpipe_track_prospect
@@ -123,40 +152,14 @@ Approve 1 and 2, or do you want to edit the drafts first?
 }
 ```
 
-**Agent:** Rachel is now in Sales mode, temperature 45. Consultant persona active — qualify and show fit, no hard sell yet.
+**Agent:** Rachel is in Sales mode, temperature 45. Consultant persona active — qualify and show fit, no hard sell yet.
 
 ---
 
-**You:** Show me my full pipeline.
+**You:** Who's hottest? Generate a message for them.
 
 ```
 → signalpipe_get_pipeline
-```
-
-```
-Pipeline: 12 prospects
-
-● Closing  (75–100)   2 prospects
-  → u/sarah_cto        temp 88   last: booked_demo
-  → u/mike_founder     temp 82   last: asked_pricing
-
-◑ Sales    (30–74)    7 prospects
-  → u/ops_lead_rachel  temp 45   last: replied       ← just added
-  → u/dev_team_james   temp 62   last: viewed_content
-  → ...
-
-○ Recovery (0–29)     3 prospects
-  → u/ghost_since_jan  temp 14   last: ghosted_7_days
-  → ...
-```
-
-**Agent:** 2 in Closing — sarah_cto booked a demo, she's your hottest follow-up. Want me to generate a message for her?
-
----
-
-**You:** Yes. Message for sarah_cto.
-
-```
 → signalpipe_get_message (prospect_id: pro_sarah_cto)
 ```
 
@@ -172,7 +175,7 @@ Pipeline: 12 prospects
 }
 ```
 
-**Agent:** Closing mode, friction-removal tactic. Her previous pricing objection is on record — the AI avoided that angle automatically. Ready to send, or want to edit?
+**Agent:** Closing mode, friction-removal tactic. Her previous pricing objection is permanently on record — the AI avoided that angle automatically.
 
 ---
 
@@ -180,133 +183,107 @@ Pipeline: 12 prospects
 
 ### 1. Get a backend + operator key
 
-**Managed (recommended):** Sign up at [signalpipe.io/pricing](https://signalpipe.io/pricing) — you get a `SIGNALPIPE_OPERATOR_KEY` and backend URL instantly. No infrastructure to manage.
+**Managed (recommended):** Join the waitlist at [signalpipe.io](https://signalpipe.io) — you get a `SIGNALPIPE_OPERATOR_KEY` and backend URL. No infrastructure to manage.
 
 **Self-hosted:** See [Self-Hosting](#self-hosting) below.
 
-### 2. Install the plugin on OpenClaw
+### 2. Install
 
+**Via OpenClaw:**
 ```bash
 claw install signalpipe
 ```
 
-Or add to your `openclaw.config.json`:
-```json
-{
-  "plugins": ["signalpipe"]
-}
-```
+**Via MCP (no plugin install):** Add the MCP server URL to Claude.ai, Cursor, or Windsurf — see [MCP Support](#mcp-support) above.
 
 ### 3. Set environment variables
 
-Before starting the OpenClaw gateway:
 ```bash
-# Required — backend connection
 export SIGNALPIPE_API_URL=https://api.signalpipe.io
 export SIGNALPIPE_OPERATOR_KEY=your-operator-key
 ```
 
-That's it. Scoring, drafting, and outreach all run on the SignalPipe backend — nothing else needed client-side.
+### 4. Configure a product
 
-### 4. Ask your agent
+Ask your agent:
+> *"Add my product — it's called AcmeTool, it helps ops teams automate repetitive workflows, target audience is ops leads and founders, anchor phrases: 'automate repetitive tasks', 'workflow automation', 'ops without headcount'"*
 
-- "Show me my pending leads"
-- "Add my SaaS tool as a product to monitor"
-- "Who should I follow up with today?"
-- "Generate a message for @prospect_handle"
+The signal engine activates on the next scout cycle.
 
 ---
 
 ## How Scoring Works
 
-SignalPipe runs two sequential pipelines on every incoming post.
+Every incoming post passes through two sequential pipelines.
 
 **Pipeline 1 — Scoring (backend):**
 
-1. **Keyword gate** — cheap pre-filter: any `buy_signal_keywords` must appear before the post is scored (~85% of posts eliminated here, zero API cost)
-2. **Multi-factor semantic scoring** — multi-factor analysis combining embedding similarity, urgency, specificity, and keyword density; catches buyer intent even when exact keywords aren't used
-3. **Sarcasm detection** — LLM check that distinguishes genuine buyers from casual venting or irony; fails open so real leads are never suppressed
+1. **Keyword gate** — pre-filter: any `buy_signal_keywords` must appear before the post is scored. Eliminates ~85% of posts with zero API cost.
+2. **Multi-factor semantic scoring** — embedding similarity, urgency, specificity, and keyword density. Multilingual: English, Spanish, French, German, Portuguese.
+3. **Sarcasm detection** — distinguishes genuine buyers from venting or irony. Fails open — real leads are never suppressed by the sarcasm check.
 
-**Pipeline 2 — Drafting (managed backend):**
+**Pipeline 2 — Swarm Drafting (managed backend):**
 
-Posts that survive scoring are passed to a 3-judge AI swarm running on the SignalPipe backend:
-- Skeptic · Analyst · Optimist — evaluate the lead independently via ensemble weighting
-- Low-intent leads are suppressed before a draft is written
-- Analyst draft used by default; Optimist as fallback
-- The swarm writes the reply — it does not affect the intent score
+Posts that survive scoring reach a 3-judge AI swarm:
 
-Competitor-switch posts are hard-floored and always reach your review queue regardless of intent score.
+| Judge | Role | Weight |
+|---|---|---|
+| Skeptic | Vetoes non-buyers, sellers promoting their own tools, surveys | 40% |
+| Analyst | Assesses fit depth, writes the preferred draft | 35% |
+| Optimist | Finds the strongest read of the lead, fallback draft | 25% |
 
-The final score feeds a per-product learning loop: approvals nudge the weight up, rejections nudge it down. The asymmetry is intentional — conservative about boosting, aggressive about penalizing. The system gets sharper the more you use it.
+The judges run concurrently. Their scores are fused via ensemble weighting. Low-confidence leads are auto-rejected — they never reach your queue. High-confidence leads get a draft calibrated to signal strength:
+
+- **Closer (>80):** Proposes a concrete next step — demo link, trial, or direct ask
+- **Advisor (61–80):** Consultative — acknowledges situation, introduces product naturally
+- **Educator (40–60):** Value-first — answers their question, mentions product only if it fits
+
+**Reinforcement learning:** Every approve/reject adjusts the per-product scoring weight. Approvals nudge it up conservatively; rejections penalise more aggressively. The system sharpens the more you use it.
 
 ---
 
 ## Temperature Model
 
-The Nurture Engine tracks a 0–100 temperature for each prospect:
-
-| Range | Mode | Behavior |
+| Range | Mode | Persona |
 |---|---|---|
-| 0–29 | Recovery | Re-spark cold leads, no hard sell |
-| 30–74 | Sales | Qualify, show fit, build trust |
-| 75–100 | Closing | Urgency, social proof, clear CTA |
+| 75–100 | Closing | Closer — urgency, social proof, clear CTA |
+| 30–74 | Sales | Consultant — qualify, show fit, build trust |
+| 0–29 | Recovery | Re-engager — re-spark cold leads, no hard sell |
 
-**13 signal types** map to calibrated heat deltas:
+**13 signal types** map to calibrated heat deltas: `booked_demo`, `asked_pricing`, `viewed_content`, `replied`, `clicked_link`, `not_decision_maker`, `ghosted_3_days`, `no_time`, `competitor`, `too_expensive`, `not_interested`, `bad_timing`, `ghosted_7_days`.
 
-| Signal | Direction |
-|---|---|
-| `booked_demo` | Strong positive |
-| `asked_pricing` | Strong positive |
-| `viewed_content` | Positive |
-| `replied` | Positive |
-| `clicked_link` | Positive |
-| `not_decision_maker` | Neutral |
-| `ghosted_3_days` | Negative |
-| `no_time` | Negative |
-| `competitor` | Negative |
-| `too_expensive` | Negative |
-| `not_interested` | Strong negative |
-| `bad_timing` | Strong negative |
-| `ghosted_7_days` | Strong negative |
-
-**One-directional mode transitions** — once a prospect reaches Closing, they never regress to Sales. Once in Recovery, they only re-enter Sales when they warm again. No oscillation, no spam.
-
-**Objection memory** — recorded objections (`too_expensive`, `competitor`, `bad_timing`, `no_time`, `not_decision_maker`) persist permanently and are injected into every future message generation call, along with the last 6 interactions. The AI never repeats a pitch angle that already failed.
+**One-directional mode transitions** — no oscillation, no spam. **Objection memory** — permanently recorded and injected into every future message so the AI never repeats a failed angle.
 
 ---
 
 ## Managed Backend Tiers
 
-All tiers are BYOK — you bring your own LLM key (Anthropic / OpenAI / Gemini) and your own Reddit/Twitter credentials. You pay your own LLM and API costs. SignalPipe charges only for managed backend infrastructure.
+| Tier | Price | Products | Leads/day | Prospects |
+|---|---|---|---|---|
+| BYOK | $19/mo | 3 | 50 | 1,000 |
+| Starter | $49/mo | 2 | 25 | 500 |
+| Growth | $149/mo | 10 | 250 | 5,000 |
+| Scale | $499/mo | Unlimited | Unlimited | Unlimited |
 
-| Tier | Price | Products | Leads/day | Prospects | Notes |
-|---|---|---|---|---|---|
-| BYOK | $19/mo | 3 | 50 | 1,000 | Managed backend — your OpenClaw LLM key stays in OpenClaw |
-| Starter | $49/mo | 2 | 25 | 500 | Managed backend, embeddings included |
-| Growth | $149/mo | 10 | 250 | 5,000 | Priority queue, Slack support |
-| Scale | $499/mo | Unlimited | Unlimited | Unlimited | Dedicated instance, white-glove onboarding |
-
-Annual billing available on all tiers — 2 months free (17% off).
+Annual billing available — 2 months free (17% off). First 100 waitlist signups: 50% off for 3 months.
 
 [View pricing →](https://signalpipe.io/pricing)
 
 ---
 
-## License
-
-Plugin: MIT
-Backend: Business Source License 1.1 (converts to Apache 2.0 after 4 years)
-
----
-
 ## Self-Hosting
 
-The backend is a FastAPI app. You will need:
+The backend is a FastAPI app. Requirements:
 - Python 3.11+
-- PostgreSQL with `pg_cron` and `pg_net` extensions (Supabase recommended)
+- PostgreSQL with `pg_cron` and `pg_net` (Supabase recommended)
 - A host that supports long-running processes (Railway recommended)
 - OpenAI API key (embeddings)
 
-The plugin registers 15 tools inside OpenClaw — no sidecar or separate process needed client-side. v1.4.0 adds client-side drafting (`signalpipe_draft_mission`, `signalpipe_upload_draft`, `signalpipe_get_message_prompt`, `signalpipe_record_message`) so message generation can run on the host LLM instead of the backend.
-
 Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
+
+---
+
+## License
+
+Plugin: MIT  
+Backend: Business Source License 1.1 (converts to Apache 2.0 after 4 years)
