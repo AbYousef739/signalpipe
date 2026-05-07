@@ -2,7 +2,7 @@
 
 **Agentic sales pipeline — buying-intent detection, swarm-scored lead qualification, and prospect nurturing for OpenClaw agents.**
 
-SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configure for people publicly expressing buying intent. A 3-judge AI swarm evaluates every signal, calibrates the reply to the signal strength, and surfaces only real leads for your approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude.ai, Cursor, or Windsurf.
+SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configure for people publicly expressing buying intent. A 3-judge AI swarm evaluates every signal, calibrates the reply to the signal strength, and surfaces only real leads for your approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude Code, Cursor, or Windsurf.
 
 [signalpipe.io](https://signalpipe.io)
 
@@ -57,13 +57,13 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 
 SignalPipe exposes all tools as an MCP server — no OpenClaw plugin install needed.
 
-Connect from Claude.ai → Settings → Integrations → Add MCP Server:
+Connect from Claude Code, Cursor, or Windsurf — add this URL to your MCP config:
 ```
-https://api.signalpipe.io/mcp/sse
+https://api.signalpipe.io/mcp
 ```
 Auth: `Authorization: Bearer YOUR_OPERATOR_KEY`
 
-Also works with Cursor (Settings → MCP) and Windsurf. Once connected, ask your agent:
+Once connected, ask your agent:
 - *"Show me my leads"*
 - *"Reject the first one — it's a founder promoting their own tool"*
 - *"Who should I follow up with today?"*
