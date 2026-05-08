@@ -31,6 +31,7 @@ async function request(method: string, path: string, body?: object): Promise<unk
 }
 
 export const api = {
-  get:  (path: string)                  => request('GET',  path),
-  post: (path: string, body?: object)   => request('POST', path, body),
+  get:    (path: string)                  => request('GET',    path),
+  post:   (path: string, body?: object)   => request('POST',   path, body),
+  delete: (path: string)                  => request('DELETE', path),
 }

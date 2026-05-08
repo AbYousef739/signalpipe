@@ -39,28 +39,46 @@ export function registerAcquisitionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_get_missions',
     description:
-      'Fetch all pending lead missions awaiting human review. ' +
-      'Returns missions with signal scores, product names, drafted replies, ' +
-      'competitor flags, outreach channels, and lead snippets. ' +
-      'Undrafted missions also include a `draft_context` block with product info, ' +
-      'lead text, and response schema — feed it to signalpipe_draft_mission to ' +
-      'generate a draft client-side. ' +
-      'Call this when the user asks to review leads, check the pipeline, or see what needs attention.',
-    parameters: Type.Object({}),
-    async execute(_id: string) {
-      try { return ok(await api.get('/sync/missions?include=draft_context')) } catch (e) { return err(e) }
+      'List pending lead missions awaiting review. Each mission includes ' +
+      'id, signal score, channel, lead snippet, prospect handle, role ' +
+      '(closer/advisor/educator), and the drafted reply if any. ' +
+      'Presentation: format as a numbered list inline — score, role, ' +
+      'handle, snippet, draft per mission. Do NOT run shell commands or ' +
+      'write files to inspect this response; the data is already ' +
+      'structured. ' +
+      'Call this when the user asks to review leads, check the pipeline, ' +
+      'or see what needs attention.',
+    parameters: Type.Object({
+      include_context: Type.Optional(Type.Boolean({
+        description:
+          'Leave false for listings (default). Set true only when about to draft ' +
+          'a reply and you need the full scoring breakdown — but prefer ' +
+          'signalpipe_draft_mission(mission_id) which scopes the context to one mission.',
+      })),
+    }),
+    async execute(_id: string, params: { include_context?: boolean } = {}) {
+      try {
+        const path = params.include_context
+          ? '/sync/missions?include=draft_context'
+          : '/sync/missions'
+        return ok(await api.get(path))
+      } catch (e) { return err(e) }
     },
   })
 
   openClaw.registerTool({
     name: 'signalpipe_draft_mission',
     description:
-      'Draft a reply for a mission CLIENT-SIDE using your own LLM reasoning. ' +
-      'Fetches the mission context (product info, anchors, lead text, competitor signals) ' +
-      'and returns drafting instructions. Evaluate the lead from multiple perspectives ' +
-      '(is it a real buying signal? where is the fit? what is the most helpful opening?), ' +
-      'then call signalpipe_upload_draft with your final draft. ' +
-      'If the lead is clearly not a buying signal, call signalpipe_reject_mission instead.',
+      'Get the drafting payload for a single mission so you can write the ' +
+      'reply CLIENT-SIDE using your own LLM reasoning. This is a working ' +
+      'payload, not a display payload — it contains product positioning, ' +
+      'lead text, scoring breakdown, and the response schema your draft ' +
+      'must follow. Use it to write the draft; do NOT dump the full ' +
+      'payload back to the user. ' +
+      'Workflow: 1) call this with mission_id, 2) compose a reply that ' +
+      'fits the role/tone in context.strategy, 3) call ' +
+      'signalpipe_upload_draft. If the lead is clearly not a buying ' +
+      'signal, skip drafting and call signalpipe_reject_mission instead.',
     parameters: Type.Object({
       mission_id: Type.String({ description: 'Mission ID to draft for (must be in draft_needed state)' }),
     }),
@@ -170,8 +188,20 @@ export function registerAcquisitionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_reject_mission',
     description:
-      'Reject a lead mission — it was not a real buying signal. ' +
-      'Updates status to rejected and nudges the RL weight down for that product.',
+      'Reject a lead mission — it was not a real buying signal. Use this ' +
+      'when you want the system to LEARN from the rejection. Each reason ' +
+      'maps to a different RL penalty applied to the source feed weight, ' +
+      'so the swarm sharpens over time. ' +
+      'When to use this vs signalpipe_delete_mission: ' +
+      'reject = the lead was a bad signal — feed it back so scoring ' +
+      'adjusts (always prefer this when you have any opinion on why). ' +
+      'delete = queue cleanup only, no learning. ' +
+      'Reasons: spam (heaviest penalty, bot/promoted), not_relevant ' +
+      '(wrong audience), wrong_product (signal real but wrong product ' +
+      'matched), too_vague (signal too weak), sarcasm (ironic, not feed ' +
+      'fault), already_customer (no penalty — they bought), no_reason ' +
+      '(default). Pick the most accurate reason — accuracy directly ' +
+      'improves how the system learns.',
     parameters: Type.Object({
       mission_id: Type.String({ description: 'The mission ID to reject' }),
       rejection_reason: Type.Optional(RejectionReason),
@@ -180,6 +210,30 @@ export function registerAcquisitionTools(openClaw: any): void {
       try {
         await api.post('/actions/reject', { id: params.mission_id, rejection_reason: params.rejection_reason || 'no_reason' })
         return ok({ status: 'rejected', mission_id: params.mission_id })
+      } catch (e) { return err(e) }
+    },
+  })
+
+  openClaw.registerTool({
+    name: 'signalpipe_delete_mission',
+    description:
+      'Hard-delete a mission row — silent cleanup only, no learning ' +
+      'signal. Use only when you want to clear the row without teaching ' +
+      'the system anything: duplicates, accidental scrapes, leads the ' +
+      'user does not want surfaced again but has no opinion on. ' +
+      'When to use this vs signalpipe_reject_mission: ' +
+      'delete = queue cleanup, no learning, scoring untouched. ' +
+      'reject = the lead was a bad signal and you want the system to ' +
+      'learn from it. Always prefer reject when you can categorise WHY ' +
+      'the lead was wrong — the RL loop only sharpens when you give it ' +
+      'a reason.',
+    parameters: Type.Object({
+      mission_id: Type.String({ description: 'The mission ID to delete' }),
+    }),
+    async execute(_id: string, params: { mission_id: string }) {
+      try {
+        await api.delete(`/actions/mission/${encodeURIComponent(params.mission_id)}`)
+        return ok({ status: 'deleted', mission_id: params.mission_id })
       } catch (e) { return err(e) }
     },
   })

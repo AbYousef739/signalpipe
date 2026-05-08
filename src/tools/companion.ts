@@ -61,10 +61,16 @@ export function registerCompanionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_get_message_prompt',
     description:
-      'Fetch the system prompt and conversation context for a prospect so YOU can draft ' +
-      'the next message client-side (no backend LLM cost). Returns persona voice, ' +
-      'objection history, days-since-contact, and a response schema. ' +
-      'After drafting, call signalpipe_record_message to log the sent message.',
+      'Get the drafting payload for the next outreach message so YOU can ' +
+      'draft client-side (no backend LLM cost). This is a working ' +
+      'payload, not a display payload — it contains the full system ' +
+      'prompt, recent conversation history, persona voice, objection ' +
+      'history, and response schema. Use it to write the message; do NOT ' +
+      'dump the prompt or conversation history back to the user. ' +
+      'Workflow: 1) call this with prospect_id, 2) compose a message ' +
+      'that fits the persona and follows the schema, 3) call ' +
+      'signalpipe_record_message. Daily send cap is enforced — ' +
+      'record_message returns a cap-hit error if exceeded.',
     parameters: Type.Object({
       prospect_id: Type.String({ description: 'Prospect ID (returned by signalpipe_track_prospect)' }),
     }),
@@ -97,9 +103,16 @@ export function registerCompanionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_get_pipeline',
     description:
-      'Get the full prospect pipeline sorted by temperature (hottest first). ' +
-      'Includes summary counts per mode. ' +
-      'Call this when the user asks "how is my pipeline", "who should I follow up with", or "show me hot prospects".',
+      'List the prospect pipeline sorted hottest-first. Each prospect ' +
+      'includes id, handle, channel, temperature (0–100), mode ' +
+      '(sales/closing/recovery), last_signal, last_contact, and any ' +
+      'recorded objections. Includes summary counts per mode. ' +
+      'Presentation: lead with the summary counts, then list the top ' +
+      'prospects as a numbered list with handle, temperature, mode, and ' +
+      'last signal. Do NOT introspect this response with shell commands ' +
+      '— the data is already structured. ' +
+      'Call this when the user asks "how is my pipeline", "who should I ' +
+      'follow up with", or "show me hot prospects".',
     parameters: Type.Object({}),
     async execute(_id: string) {
       try { return ok(await api.get('/companion/pipeline')) } catch (e) { return err(e) }

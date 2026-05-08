@@ -24,17 +24,18 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 
 ---
 
-## Tools (15 total)
+## Tools (16 total)
 
 ### Signal Acquisition
 
 | Tool | What it does |
 |---|---|
-| `signalpipe_get_missions` | Fetch pending leads awaiting review — includes swarm score, role verdict, and drafted reply |
-| `signalpipe_draft_mission` | Get drafting instructions for a mission so the host LLM can write the reply itself (BYOK path) |
+| `signalpipe_get_missions` | List pending leads awaiting review — score, role, channel, snippet, draft. Lean by default; opt into `include_context=true` only when drafting. |
+| `signalpipe_draft_mission` | Get the drafting payload for a single mission so the host LLM can write the reply itself (BYOK path) |
 | `signalpipe_upload_draft` | Upload a host-LLM-written draft to a mission |
 | `signalpipe_approve_mission` | Approve a lead and queue it for outreach |
-| `signalpipe_reject_mission` | Reject a lead with a reason — adjusts per-product RL scoring weight |
+| `signalpipe_reject_mission` | Reject a lead with a reason — teaches the per-product RL loop (different penalty per reason) |
+| `signalpipe_delete_mission` | Hard-delete a mission row — silent cleanup, no learning signal. Companion to reject. |
 | `signalpipe_scout_now` | Trigger an on-demand scouting run across all active products |
 | `signalpipe_get_products` | List all configured products |
 | `signalpipe_add_product` | Register a new product to monitor — describe it in buyer language |

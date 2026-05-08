@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed.
-version: 1.4.0
+version: 1.5.0
 metadata:
   openclaw:
     requires:
@@ -18,9 +18,11 @@ metadata:
 SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility.**
 
-Two subsystems, fifteen tools. Use them in sequence.
+Two subsystems, sixteen tools. Use them in sequence.
 
-> **v1.4.0 — Client-side drafting.** Mission drafts and prospect messages can now be generated using YOUR LLM (the one running this plugin) instead of the SignalPipe backend. Use `signalpipe_draft_mission` + `signalpipe_upload_draft` for missions, and `signalpipe_get_message_prompt` + `signalpipe_record_message` for prospect nurture. The server-side equivalents (`signalpipe_get_missions` shows drafts already produced by the backend; `signalpipe_get_message` calls the backend LLM) still work — pick whichever fits the situation.
+> **v1.5.0 — response contract + delete_mission.** Listings (`signalpipe_get_missions`, `signalpipe_get_pipeline`, `signalpipe_get_products`) return lean payloads by default — `include_context=true` is opt-in. Drafting tools are framed as **working payloads, not display payloads** — use them to write the draft, don't dump them to the user. New `signalpipe_delete_mission` is the silent-cleanup companion to `signalpipe_reject_mission` (which teaches the RL loop).
+
+> **v1.4.0 — Client-side drafting.** Mission drafts and prospect messages can be generated using YOUR LLM instead of the SignalPipe backend. Use `signalpipe_draft_mission` + `signalpipe_upload_draft` for missions, and `signalpipe_get_message_prompt` + `signalpipe_record_message` for prospect nurture. The backend-LLM equivalent `signalpipe_get_message` still works — pick whichever fits.
 
 ---
 
@@ -80,15 +82,39 @@ If the user edited the draft, pass their version via `draft`. Otherwise omit it.
 ---
 
 ### Tool: `signalpipe_reject_mission`
-Reject a mission — it was not a real buying signal.
+Reject a mission — it was not a real buying signal. Teaches the RL loop.
 
-**When to call:** User says "skip", "not relevant", "bad lead", "reject".
+**When to call:** User says "skip", "not relevant", "bad lead", "reject" — and you have any opinion on WHY it was bad. If the user just wants the row gone with no learning signal, use `signalpipe_delete_mission` instead.
 
-**Effect:** Sets the mission status to rejected and nudges the RL weight down. The penalty adapts to the rejection reason — spam is penalized hardest, sarcasm and wrong-product are gentle, "already a customer" carries zero penalty.
+**Effect:** Sets the mission status to rejected and nudges the RL weight down by a per-reason amount. Accuracy directly improves how the system learns.
+
+| Reason | Penalty | When to pick |
+|---|---|---|
+| `spam` | -0.04 | Bot, promoted, automated post |
+| `not_relevant` | -0.03 | Wrong audience or topic |
+| `wrong_product` | -0.01 | Real signal, wrong product matched |
+| `too_vague` | -0.02 | Signal too weak to act on |
+| `sarcasm` | -0.01 | Ironic / venting, not a real buyer |
+| `already_customer` | 0.00 | They bought — no penalty |
+| `no_reason` | -0.02 | Default if you have no opinion |
 
 **Parameters:**
 - `mission_id` (required)
-- `rejection_reason` (optional) — why the lead was bad: `not_relevant` | `sarcasm` | `wrong_product` | `spam` | `too_vague` | `already_customer` | `no_reason` (default). If the user says why they're rejecting, pass the closest reason.
+- `rejection_reason` (optional) — pick the closest reason from the table. The reason accumulates into `products.rejection_stats` for analytics.
+
+---
+
+### Tool: `signalpipe_delete_mission`
+Hard-delete a mission row — silent queue cleanup, no learning signal.
+
+**When to call:** User says "just delete this", "clear it", "I don't care, get rid of it" — or when you want to clear duplicates / accidental scrapes that the RL loop should not learn from.
+
+**Effect:** Removes the row entirely. The source feed's scoring weight is untouched.
+
+**When to prefer `signalpipe_reject_mission` instead:** Any time you can categorise WHY the lead was bad. Reject teaches the RL loop with a per-reason penalty; delete throws away the learning signal. Default to reject when in doubt.
+
+**Parameters:**
+- `mission_id` (required)
 
 ---
 
@@ -250,12 +276,12 @@ Get the full prospect pipeline sorted by temperature.
 
 ## Backend Lifecycle
 
-When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 15 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 16 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
 🦐 SignalPipe ONLINE
    Backend : https://api.signalpipe.io
-   Tools   : 15 registered (Mantidae + Nurture Engine)
+   Tools   : 16 registered (Mantidae + Nurture Engine)
    Status  : connected
 ```
 
