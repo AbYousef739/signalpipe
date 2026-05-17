@@ -101,6 +101,55 @@ export function registerCompanionTools(openClaw: any): void {
   })
 
   openClaw.registerTool({
+    name: 'signalpipe_score_signal',
+    description:
+      'Score arbitrary text against a product profile — the same scoring ' +
+      'engine the scout runs on RSS feeds, exposed for any channel your ' +
+      'host agent has access to (Gmail, Slack, Discord, Telegram, ' +
+      'LinkedIn, WhatsApp, web pages, transcripts, etc.). SignalPipe never ' +
+      'touches the source platform; you read the content with your other ' +
+      'plugins, paste it here for intent classification. ' +
+      'Returns score (0-100), classification (buying_intent | borderline ' +
+      '| competitor_mention | noise), role (closer | advisor | educator), ' +
+      'sub-scores (urgency, specificity, keyword density), competitor ' +
+      'match info, and — when score >= 40 and not sarcastic — a ' +
+      'drafting_context block you can use to draft a reply client-side ' +
+      'without uploading anything. ' +
+      'When to use this vs signalpipe_track_prospect: ' +
+      'score_signal = does this TEXT contain a buying signal? (pure ' +
+      'classification, no state change). ' +
+      'track_prospect = this PERSON took an action, update their ' +
+      'temperature (writes to the pipeline). ' +
+      'Many flows use both: score inbound text first, then track the ' +
+      'prospect if the signal is real.',
+    parameters: Type.Object({
+      text: Type.String({
+        description:
+          'Content to score. Plain text, ideally under 4000 chars (longer ' +
+          'input is truncated server-side without re-scoring). Forwarded ' +
+          'emails: paste the body; subject is fine to include inline.',
+      }),
+      product_id: Type.String({
+        description:
+          'Product profile to score against (from signalpipe_get_products). ' +
+          'The same text scores differently against different products — ' +
+          'a Reddit growth-hacking post may be high signal for a lead-gen ' +
+          'product and noise for a CRM.',
+      }),
+      source_hint: Type.Optional(Type.String({
+        description:
+          'Channel label for drafting-tone hints only: ' +
+          '"gmail" | "slack" | "discord" | "telegram" | "linkedin" | ' +
+          '"whatsapp" | "twitter" | "reddit" | etc. Affects drafting_context ' +
+          'tone, not the score. Omit if not relevant.',
+      })),
+    }),
+    async execute(_id: string, params: { text: string; product_id: string; source_hint?: string }) {
+      try { return ok(await api.post('/signal/score', params)) } catch (e) { return err(e) }
+    },
+  })
+
+  openClaw.registerTool({
     name: 'signalpipe_get_pipeline',
     description:
       'List the prospect pipeline sorted hottest-first. Each prospect ' +

@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed.
-version: 1.5.0
+version: 1.6.0
 metadata:
   openclaw:
     requires:
@@ -18,7 +18,9 @@ metadata:
 SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility.**
 
-Two subsystems, sixteen tools. Use them in sequence.
+Two subsystems, seventeen tools. Use them in sequence.
+
+> **v1.6.0 — universal signal scoring.** New `signalpipe_score_signal` exposes the scout's scoring engine for arbitrary text from any channel your host agent can read (Gmail, Slack, Discord, Telegram, LinkedIn, web pages, transcripts). You paste content, you get back score, classification, role, sub-scores, competitor info, and a drafting context block for client-side replies — without polling a feed or creating a mission. Lives in the Companion subsystem because the use-case is multi-channel and mid-funnel.
 
 > **v1.5.0 — response contract + delete_mission.** Listings (`signalpipe_get_missions`, `signalpipe_get_pipeline`, `signalpipe_get_products`) return lean payloads by default — `include_context=true` is opt-in. Drafting tools are framed as **working payloads, not display payloads** — use them to write the draft, don't dump them to the user. New `signalpipe_delete_mission` is the silent-cleanup companion to `signalpipe_reject_mission` (which teaches the RL loop).
 
@@ -193,6 +195,36 @@ Temperature transitions: ≥75 → closing · ≥30 → sales · <30 → recover
 
 ---
 
+### Tool: `signalpipe_score_signal`
+Score arbitrary text against a product profile — the same scoring engine the scout runs on RSS feeds, exposed for any channel.
+
+**When to call:** User pastes an email, forwarded DM, Slack thread, LinkedIn message, transcript snippet, or any text and asks "is this a real buying signal?" or "is this person interested?". Also use it as a triage step before `signalpipe_track_prospect` when you're not sure the signal is genuine.
+
+**SignalPipe never touches the source platform.** You (the host agent) read the content with your other plugins; this tool just classifies the text. The scoring is the exact same pipeline the scout uses on Reddit/HN — embedding similarity to product anchors, urgency / specificity / keyword-density sub-scores, competitor detection, sarcasm gate, and the same per-product RL weight.
+
+**Parameters:**
+- `text` — content to score (truncated server-side to 4000 chars)
+- `product_id` — from `signalpipe_get_products`. Same text scores differently against different products
+- `source_hint` (optional) — channel label (`gmail` | `slack` | `discord` | `telegram` | `linkedin` | `whatsapp` | `twitter` | `reddit` | …). Affects drafting tone, not the score
+
+**Returns:**
+- `score` — 0–100 weighted score (after RL multiplier, clamped)
+- `content_score` — pre-RL content score (honest about what's in the text)
+- `classification` — `buying_intent` (≥60) · `borderline` (40–59) · `competitor_mention` · `noise`
+- `role` — `closer` (>80 content) · `advisor` (>60) · `educator`
+- `sub_scores` — `urgency`, `specificity`, `keyword_density` for explainability
+- `competitor_match`, `competitor_name`, `competitor_intent` — competitor detection + intent (complaining / replacing / comparing / neutral)
+- `sarcastic` — boolean; sarcastic text scores 0 regardless of surface signal
+- `drafting_context` — only present when score ≥ 40 and not sarcastic; contains product info, signal info, and tone instructions for client-side drafting
+
+**When to use this vs `signalpipe_track_prospect`:**
+- `score_signal` = does this **text** contain a buying signal? Pure classification, no state change
+- `track_prospect` = this **person** took an action, update their temperature. Writes to the pipeline
+
+Many flows use both: score the inbound text first, then track the prospect if the signal is real.
+
+---
+
 ### Tool: `signalpipe_track_prospect`
 Log a signal from a prospect and update their temperature.
 
@@ -276,12 +308,12 @@ Get the full prospect pipeline sorted by temperature.
 
 ## Backend Lifecycle
 
-When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 16 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 17 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
 🦐 SignalPipe ONLINE
    Backend : https://api.signalpipe.io
-   Tools   : 16 registered (Mantidae + Nurture Engine)
+   Tools   : 17 registered (Mantidae + Nurture Engine)
    Status  : connected
 ```
 

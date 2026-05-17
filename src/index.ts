@@ -2,11 +2,20 @@ import { registerAcquisitionTools } from './tools/mantidae'
 import { registerCompanionTools } from './tools/companion'
 
 /**
- * SignalPipe — OpenClaw Plugin v1.5.0
+ * SignalPipe — OpenClaw Plugin v1.6.0
  *
- * Registers 16 tools across two subsystems:
+ * Registers 17 tools across two subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
+ *
+ * v1.6.0 — universal signal scoring
+ *   - signalpipe_score_signal added: exposes the scout's scoring engine
+ *     for arbitrary text from any channel the host agent can read
+ *     (Gmail, Slack, Discord, Telegram, LinkedIn, web pages, transcripts).
+ *     Returns score, classification, role, sub-scores, competitor info,
+ *     and a drafting_context block for client-side reply drafting.
+ *     Lives in companion.ts because the use-case is multi-channel and
+ *     mid-funnel (assessing inbound replies, hand-pasted leads, etc.).
  *
  * v1.5.0 — response contract + delete_mission
  *   - signalpipe_delete_mission added: silent queue cleanup with no RL signal,
@@ -38,7 +47,7 @@ export function register(api: any): void {
   registerAcquisitionTools(api)
   registerCompanionTools(api)
 
-  console.log('[SignalPipe] Plugin v1.5.0 loaded — 16 tools registered')
+  console.log('[SignalPipe] Plugin v1.6.0 loaded — 17 tools registered')
 }
 
 export default register

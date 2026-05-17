@@ -1,6 +1,6 @@
 {
   "name": "signalpipe",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts outreach for Reddit and X/Twitter via managed backend, and nurtures prospects from cold to closed.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
