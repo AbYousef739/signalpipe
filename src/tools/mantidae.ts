@@ -252,7 +252,7 @@ export function registerAcquisitionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_get_products',
     description:
-      'List all active products configured in SignalPipe, including RL weights and creation dates.',
+      'List all active products configured in SignalPipe, with their anchor sentences, competitor keywords, and creation dates. (Note: products.rl_weight is returned for backward compatibility but is no longer used as a scoring multiplier as of v3.7.7 — per-station RL weights live on stations.rl_weight instead.)',
     parameters: Type.Object({}),
     async execute(_id: string) {
       try { return ok(await api.get('/products/list')) } catch (e) { return err(e) }

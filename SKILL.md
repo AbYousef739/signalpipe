@@ -200,7 +200,7 @@ Score arbitrary text against a product profile — the same scoring engine the s
 
 **When to call:** User pastes an email, forwarded DM, Slack thread, LinkedIn message, transcript snippet, or any text and asks "is this a real buying signal?" or "is this person interested?". Also use it as a triage step before `signalpipe_track_prospect` when you're not sure the signal is genuine.
 
-**SignalPipe never touches the source platform.** You (the host agent) read the content with your other plugins; this tool just classifies the text. The scoring is the exact same pipeline the scout uses on Reddit/HN — embedding similarity to product anchors, urgency / specificity / keyword-density sub-scores, competitor detection, sarcasm gate, and the same per-product RL weight.
+**SignalPipe never touches the source platform.** You (the host agent) read the content with your other plugins; this tool just classifies the text. The scoring is the exact same pipeline the scout uses on Reddit/HN — embedding similarity to product anchors, urgency / specificity / keyword-density sub-scores, competitor detection, and sarcasm gate. Note: the per-station RL weight (which the scout multiplies into scores from a specific feed) does NOT apply to score_signal calls — there is no "source station" for ad-hoc text from Gmail, Slack, etc., so the raw scoring engine is used directly.
 
 **Parameters:**
 - `text` — content to score (truncated server-side to 4000 chars)

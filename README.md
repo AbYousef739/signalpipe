@@ -34,7 +34,7 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 | `signalpipe_draft_mission` | Get the drafting payload for a single mission so the host LLM can write the reply itself (BYOK path) |
 | `signalpipe_upload_draft` | Upload a host-LLM-written draft to a mission |
 | `signalpipe_approve_mission` | Approve a lead and queue it for outreach |
-| `signalpipe_reject_mission` | Reject a lead with a reason — teaches the per-product RL loop (different penalty per reason) |
+| `signalpipe_reject_mission` | Reject a lead with a reason — teaches the per-station RL loop (penalty size adapts to the reason; demotes one noisy feed without dragging the rest of the product down) |
 | `signalpipe_delete_mission` | Hard-delete a mission row — silent cleanup, no learning signal. Companion to reject. |
 | `signalpipe_scout_now` | Trigger an on-demand scouting run across all active products |
 | `signalpipe_get_products` | List all configured products |
@@ -239,7 +239,7 @@ The judges run concurrently. Their scores are fused via ensemble weighting. Low-
 - **Advisor (61–80):** Consultative — acknowledges situation, introduces product naturally
 - **Educator (40–60):** Value-first — answers their question, mentions product only if it fits
 
-**Reinforcement learning:** Every approve/reject adjusts the per-product scoring weight. Approvals nudge it up conservatively; rejections penalise more aggressively. The system sharpens the more you use it.
+**Reinforcement learning:** Every approve/reject adjusts the source station's RL weight — each listening feed (subreddit, HN search, RSS source) carries its own multiplier. Approvals are flat (+0.05); rejections are reason-aware (spam −0.04, not_relevant −0.03, no_reason / too_vague −0.02, sarcasm / wrong_product −0.01, already_customer 0.00). Per-station scoping means one noisy feed gets demoted without penalising the rest of the product's sources.
 
 ---
 
