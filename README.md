@@ -245,11 +245,16 @@ The judges run concurrently. Their scores are fused via ensemble weighting. Low-
 
 ## Temperature Model
 
-| Range | Mode | Persona |
+Mode is **intent-based**, not pure temperature. Brand-new prospects start in
+`nurture` regardless of their starting temperature and only move out once a
+real signal lands.
+
+| Mode | When | Persona |
 |---|---|---|
-| 75–100 | Closing | Closer — urgency, social proof, clear CTA |
-| 30–74 | Sales | Consultant — qualify, show fit, build trust |
-| 0–29 | Recovery | Re-engager — re-spark cold leads, no hard sell |
+| Nurture | First-touch / no engagement yet (default for new prospects) | Educator — value-first, lead with insight, mention the product only if it fits |
+| Sales | Prospect engaged (replied / clicked / asked / viewed) and temperature 30–74 | Consultant — qualify, show fit, build trust |
+| Closing | Sustained engagement and temperature ≥ 75 | Closer — urgency, social proof, clear CTA |
+| Recovery | Previously engaged and cooled, **or** explicit cooling signal (ghosted_3_days, ghosted_7_days, not_interested, bad_timing) | Re-engager — re-spark cold leads, no hard sell |
 
 **13 signal types** map to calibrated heat deltas: `booked_demo`, `asked_pricing`, `viewed_content`, `replied`, `clicked_link`, `not_decision_maker`, `ghosted_3_days`, `no_time`, `competitor`, `too_expensive`, `not_interested`, `bad_timing`, `ghosted_7_days`.
 
