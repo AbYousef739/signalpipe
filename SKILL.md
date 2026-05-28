@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed.
-version: 1.6.0
+version: 1.6.2
 metadata:
   openclaw:
     requires:
@@ -19,6 +19,8 @@ SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility.**
 
 Two subsystems, seventeen tools. Use them in sequence.
+
+> **v1.6.2 — reject vs delete clarity for stale posts.** When a post is gone by the time the operator gets there (deleted by the poster, 404, removed by mods, or stale beyond the reply window), the lead wasn't bad — the opportunity just evaporated. Use `signalpipe_delete_mission` (no RL penalty), NOT `signalpipe_reject_mission(not_relevant)` (which would penalise a station that did nothing wrong). The tool descriptions and the reject / delete sections below have been clarified accordingly. No tool surface change — this is presentation only, aligning the LLM-facing guidance with mantidae backend v3.7.13 + v3.7.14 (which also added cross-poster dedup and locked swarm temperature to 0.2 for deterministic classification).
 
 > **v1.6.0 — universal signal scoring.** New `signalpipe_score_signal` exposes the scout's scoring engine for arbitrary text from any channel your host agent can read (Gmail, Slack, Discord, Telegram, LinkedIn, web pages, transcripts). You paste content, you get back score, classification, role, sub-scores, competitor info, and a drafting context block for client-side replies — without polling a feed or creating a mission. Lives in the Companion subsystem because the use-case is multi-channel and mid-funnel.
 
@@ -88,6 +90,8 @@ Reject a mission — it was not a real buying signal. Teaches the RL loop.
 
 **When to call:** User says "skip", "not relevant", "bad lead", "reject" — and you have any opinion on WHY it was bad. If the user just wants the row gone with no learning signal, use `signalpipe_delete_mission` instead.
 
+**DO NOT call when the post is gone.** If the user says the post was deleted, 404'd, removed by mods, or has gone stale beyond the reply window — that's `signalpipe_delete_mission`, not `signalpipe_reject_mission`. The lead wasn't a bad signal; the opportunity just evaporated. Using `reject_mission(not_relevant)` here applies a -0.03 RL penalty to a station that did nothing wrong.
+
 **Effect:** Sets the mission status to rejected and nudges the RL weight down by a per-reason amount. Accuracy directly improves how the system learns.
 
 | Reason | Penalty | When to pick |
@@ -111,9 +115,11 @@ Hard-delete a mission row — silent queue cleanup, no learning signal.
 
 **When to call:** User says "just delete this", "clear it", "I don't care, get rid of it" — or when you want to clear duplicates / accidental scrapes that the RL loop should not learn from.
 
+**Canonical case — the post is gone.** If the user says the post was deleted by the poster, 404'd, removed by mods, or has gone stale beyond their reply window, `signalpipe_delete_mission` is the right tool. The lead wasn't wrong, the opportunity just evaporated — there's nothing to teach the station. Using `signalpipe_reject_mission` here would penalise a station that did nothing wrong.
+
 **Effect:** Removes the row entirely. The source feed's scoring weight is untouched.
 
-**When to prefer `signalpipe_reject_mission` instead:** Any time you can categorise WHY the lead was bad. Reject teaches the RL loop with a per-reason penalty; delete throws away the learning signal. Default to reject when in doubt.
+**When to prefer `signalpipe_reject_mission` instead:** Any time you can categorise WHY the lead was bad. Reject teaches the RL loop with a per-reason penalty; delete throws away the learning signal. Default to reject when in doubt — but DO default to delete when the post is just gone.
 
 **Parameters:**
 - `mission_id` (required)

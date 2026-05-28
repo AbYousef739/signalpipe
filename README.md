@@ -24,7 +24,7 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 
 ---
 
-## Tools (16 total)
+## Tools (17 total)
 
 ### Signal Acquisition
 
@@ -34,8 +34,8 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 | `signalpipe_draft_mission` | Get the drafting payload for a single mission so the host LLM can write the reply itself (BYOK path) |
 | `signalpipe_upload_draft` | Upload a host-LLM-written draft to a mission |
 | `signalpipe_approve_mission` | Approve a lead and queue it for outreach |
-| `signalpipe_reject_mission` | Reject a lead with a reason — teaches the per-station RL loop (penalty size adapts to the reason; demotes one noisy feed without dragging the rest of the product down) |
-| `signalpipe_delete_mission` | Hard-delete a mission row — silent cleanup, no learning signal. Companion to reject. |
+| `signalpipe_reject_mission` | Reject a lead with a reason — teaches the per-station RL loop (penalty size adapts to the reason; demotes one noisy feed without dragging the rest of the product down). **Don't** use this when the post is just gone — use `signalpipe_delete_mission` instead. |
+| `signalpipe_delete_mission` | Hard-delete a mission row — silent cleanup, no learning signal. Companion to reject. **Canonical case:** the post was deleted / 404'd / removed before you could reply. |
 | `signalpipe_scout_now` | Trigger an on-demand scouting run across all active products |
 | `signalpipe_get_products` | List all configured products |
 | `signalpipe_add_product` | Register a new product to monitor — describe it in buyer language |
@@ -51,6 +51,7 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 | `signalpipe_get_message_prompt` | Get the full prompt + context so the host LLM writes the message (BYOK path) |
 | `signalpipe_record_message` | Record a host-LLM-written message as sent |
 | `signalpipe_get_pipeline` | View the full prospect pipeline sorted by temperature |
+| `signalpipe_score_signal` | Universal scorer — paste any text (Gmail, Slack, Discord, Telegram, LinkedIn, transcripts) and get back the same score + classification + drafting context the scout produces for Reddit/HN posts. SignalPipe never touches the source channel; your host agent does. |
 
 ---
 

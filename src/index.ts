@@ -2,11 +2,26 @@ import { registerAcquisitionTools } from './tools/mantidae'
 import { registerCompanionTools } from './tools/companion'
 
 /**
- * SignalPipe — OpenClaw Plugin v1.6.0
+ * SignalPipe — OpenClaw Plugin v1.6.2
  *
  * Registers 17 tools across two subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
+ *
+ * v1.6.2 — docstring + presentation refresh (no tool surface change)
+ *   - signalpipe_reject_mission and signalpipe_delete_mission descriptions
+ *     now explicitly call out the stale/deleted-post case: when a post is
+ *     gone before the operator can reply, the architecturally correct tool
+ *     is delete_mission (no RL penalty) — reject_mission(not_relevant)
+ *     would unfairly demote a station that did nothing wrong.
+ *   - Aligns with mantidae backend v3.7.13 + v3.7.14 (cross-poster dedup
+ *     at lead-insert, swarm temperature=0.2, MCP docstring fix in
+ *     commit 43f9429). No behaviour change in the plugin itself — these
+ *     descriptions are the LLM-facing surface that closes the workflow
+ *     gap where operators were reaching for reject_mission(not_relevant)
+ *     on stale posts and polluting the RL signal.
+ *
+ * v1.6.1 — docs-only sync with mantidae v3.7.7 per-station RL
  *
  * v1.6.0 — universal signal scoring
  *   - signalpipe_score_signal added: exposes the scout's scoring engine
@@ -47,7 +62,7 @@ export function register(api: any): void {
   registerAcquisitionTools(api)
   registerCompanionTools(api)
 
-  console.log('[SignalPipe] Plugin v1.6.0 loaded — 17 tools registered')
+  console.log('[SignalPipe] Plugin v1.6.2 loaded — 17 tools registered')
 }
 
 export default register

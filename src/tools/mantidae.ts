@@ -196,6 +196,13 @@ export function registerAcquisitionTools(openClaw: any): void {
       'reject = the lead was a bad signal — feed it back so scoring ' +
       'adjusts (always prefer this when you have any opinion on why). ' +
       'delete = queue cleanup only, no learning. ' +
+      'DO NOT use reject_mission when the post is gone (deleted by the ' +
+      'poster, 404, removed by mods, or stale beyond your reply window) — ' +
+      'the lead was not bad, the opportunity just evaporated. Use ' +
+      'signalpipe_delete_mission instead, which leaves the source ' +
+      'station\'s RL weight untouched. Reaching for ' +
+      'reject_mission(not_relevant) on a deleted post applies a -0.03 ' +
+      'penalty to a station that did nothing wrong. ' +
       'Reasons: spam (heaviest penalty, bot/promoted), not_relevant ' +
       '(wrong audience), wrong_product (signal real but wrong product ' +
       'matched), too_vague (signal too weak), sarcasm (ironic, not feed ' +
@@ -221,8 +228,16 @@ export function registerAcquisitionTools(openClaw: any): void {
       'signal. Use only when you want to clear the row without teaching ' +
       'the system anything: duplicates, accidental scrapes, leads the ' +
       'user does not want surfaced again but has no opinion on. ' +
+      'CANONICAL CASE: the post is gone by the time the user gets there — ' +
+      'deleted by the poster, 404, removed by mods, or stale beyond the ' +
+      'reply window. The lead was not wrong, the opportunity just ' +
+      'evaporated. delete_mission is the right tool because there is ' +
+      'nothing to learn from the station — its RL weight stays untouched. ' +
+      'Using reject_mission here would unfairly penalise a station for an ' +
+      'event it did not cause. ' +
       'When to use this vs signalpipe_reject_mission: ' +
-      'delete = queue cleanup, no learning, scoring untouched. ' +
+      'delete = queue cleanup, no learning, scoring untouched. Canonical ' +
+      'uses: post deleted, duplicates, accidental scrapes. ' +
       'reject = the lead was a bad signal and you want the system to ' +
       'learn from it. Always prefer reject when you can categorise WHY ' +
       'the lead was wrong — the RL loop only sharpens when you give it ' +
