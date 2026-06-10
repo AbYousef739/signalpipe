@@ -201,7 +201,7 @@ export function registerAcquisitionTools(openClaw: any): void {
       'the lead was not bad, the opportunity just evaporated. Use ' +
       'signalpipe_delete_mission instead, which leaves the source ' +
       'station\'s RL weight untouched. Reaching for ' +
-      'reject_mission(not_relevant) on a deleted post applies a -0.03 ' +
+      'reject_mission(not_relevant) on a deleted post applies an unwarranted ' +
       'penalty to a station that did nothing wrong. ' +
       'Reasons: spam (heaviest penalty, bot/promoted), not_relevant ' +
       '(wrong audience), wrong_product (signal real but wrong product ' +

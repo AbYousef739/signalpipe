@@ -92,19 +92,19 @@ Reject a mission — it was not a real buying signal. Teaches the RL loop.
 
 **When to call:** User says "skip", "not relevant", "bad lead", "reject" — and you have any opinion on WHY it was bad. If the user just wants the row gone with no learning signal, use `signalpipe_delete_mission` instead.
 
-**DO NOT call when the post is gone.** If the user says the post was deleted, 404'd, removed by mods, or has gone stale beyond the reply window — that's `signalpipe_delete_mission`, not `signalpipe_reject_mission`. The lead wasn't a bad signal; the opportunity just evaporated. Using `reject_mission(not_relevant)` here applies a -0.03 RL penalty to a station that did nothing wrong.
+**DO NOT call when the post is gone.** If the user says the post was deleted, 404'd, removed by mods, or has gone stale beyond the reply window — that's `signalpipe_delete_mission`, not `signalpipe_reject_mission`. The lead wasn't a bad signal; the opportunity just evaporated. Using `reject_mission(not_relevant)` here applies an RL penalty to a station that did nothing wrong.
 
 **Effect:** Sets the mission status to rejected and nudges the RL weight down by a per-reason amount. Accuracy directly improves how the system learns.
 
 | Reason | Penalty | When to pick |
 |---|---|---|
-| `spam` | -0.04 | Bot, promoted, automated post |
-| `not_relevant` | -0.03 | Wrong audience or topic |
-| `wrong_product` | -0.01 | Real signal, wrong product matched |
-| `too_vague` | -0.02 | Signal too weak to act on |
-| `sarcasm` | -0.01 | Ironic / venting, not a real buyer |
-| `already_customer` | 0.00 | They bought — no penalty |
-| `no_reason` | -0.02 | Default if you have no opinion |
+| `spam` | heaviest | Bot, promoted, automated post |
+| `not_relevant` | heavy | Wrong audience or topic |
+| `wrong_product` | light | Real signal, wrong product matched |
+| `too_vague` | moderate | Signal too weak to act on |
+| `sarcasm` | light | Ironic / venting, not a real buyer |
+| `already_customer` | none | They bought — no penalty |
+| `no_reason` | moderate | Default if you have no opinion |
 
 **Parameters:**
 - `mission_id` (required)
@@ -218,8 +218,8 @@ Score arbitrary text against a product profile — the same scoring engine the s
 **Returns:**
 - `score` — 0–100 weighted score (after RL multiplier, clamped)
 - `content_score` — pre-RL content score (honest about what's in the text)
-- `classification` — `buying_intent` (≥60) · `borderline` (40–59) · `competitor_mention` · `noise`
-- `role` — `closer` (>80 content) · `advisor` (>60) · `educator`
+- `classification` — `buying_intent` · `borderline` · `competitor_mention` · `noise`
+- `role` — `closer` (highest-intent) · `advisor` (mid-intent) · `educator` (early-stage)
 - `sub_scores` — `urgency`, `specificity`, `keyword_density` for explainability
 - `competitor_match`, `competitor_name`, `competitor_intent` — competitor detection + intent (complaining / replacing / comparing / neutral)
 - `sarcastic` — boolean; sarcastic text scores 0 regardless of surface signal

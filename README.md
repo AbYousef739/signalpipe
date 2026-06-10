@@ -13,9 +13,9 @@ SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configur
 **Top of funnel — Signal Acquisition (Mantidae):**
 Scouts Reddit, Hacker News, X/Twitter, and custom RSS feeds every cycle. Every post passes through a 3-stage scoring filter — keyword gate, multi-factor semantic scoring, sarcasm detection — then reaches a 3-judge AI drafting swarm: Skeptic, Analyst, Optimist. Each judge scores the lead independently. The swarm fuses their scores and suppresses low-intent posts automatically. Only leads that clear the swarm reach your queue — with a draft already calibrated to how hot the signal is:
 
-- **Score > 80 (Closer):** Direct, action-oriented reply — proposes a concrete next step
-- **Score 61–80 (Advisor):** Consultative — acknowledges the problem, introduces the product naturally
-- **Score 40–60 (Educator):** Value-first — leads with a genuine insight, mentions the product only if it fits
+- **Closer (highest-intent):** Direct, action-oriented reply — proposes a concrete next step
+- **Advisor (mid-intent):** Consultative — acknowledges the problem, introduces the product naturally
+- **Educator (early-stage):** Value-first — leads with a genuine insight, mentions the product only if it fits
 
 Competitor-switch posts are hard-floored and always reach your queue regardless of score.
 
@@ -253,19 +253,19 @@ Every incoming post passes through two sequential pipelines.
 
 Posts that survive scoring reach a 3-judge AI swarm:
 
-| Judge | Role | Weight |
-|---|---|---|
-| Skeptic | Vetoes non-buyers, sellers promoting their own tools, surveys | 40% |
-| Analyst | Assesses fit depth, writes the preferred draft | 35% |
-| Optimist | Finds the strongest read of the lead, fallback draft | 25% |
+| Judge | Role |
+|---|---|
+| Skeptic | Vetoes non-buyers, sellers promoting their own tools, surveys |
+| Analyst | Assesses fit depth, writes the preferred draft |
+| Optimist | Finds the strongest read of the lead, fallback draft |
 
-The judges run concurrently. Their scores are fused via ensemble weighting. Low-confidence leads are auto-rejected — they never reach your queue. High-confidence leads get a draft calibrated to signal strength:
+The judges run concurrently, and their scores are fused via a weighted ensemble. Low-confidence leads are auto-rejected — they never reach your queue. High-confidence leads get a draft calibrated to signal strength:
 
-- **Closer (>80):** Proposes a concrete next step — demo link, trial, or direct ask
-- **Advisor (61–80):** Consultative — acknowledges situation, introduces product naturally
-- **Educator (40–60):** Value-first — answers their question, mentions product only if it fits
+- **Closer (highest-intent):** Proposes a concrete next step — demo link, trial, or direct ask
+- **Advisor (mid-intent):** Consultative — acknowledges situation, introduces product naturally
+- **Educator (early-stage):** Value-first — answers their question, mentions product only if it fits
 
-**Reinforcement learning:** Every approve/reject adjusts the source station's RL weight — each listening feed (subreddit, HN search, RSS source) carries its own multiplier. Approvals are flat (+0.05); rejections are reason-aware (spam −0.04, not_relevant −0.03, no_reason / too_vague −0.02, sarcasm / wrong_product −0.01, already_customer 0.00). Per-station scoping means one noisy feed gets demoted without penalising the rest of the product's sources.
+**Reinforcement learning:** Every approve/reject adjusts the source station's RL weight — each listening feed (subreddit, HN search, RSS source) carries its own multiplier. Approvals reward the feed; rejections are reason-aware, with the penalty sized to how bad the signal was — spam is penalised hardest, then wrong-audience, then weak or no-reason rejections, while sarcasm and wrong-product are lighter and "already a customer" carries no penalty. Per-station scoping means one noisy feed gets demoted without penalising the rest of the product's sources.
 
 ---
 
