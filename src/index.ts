@@ -1,12 +1,30 @@
 import { registerAcquisitionTools } from './tools/mantidae'
 import { registerCompanionTools } from './tools/companion'
+import { registerSenderTools } from './tools/sender'
 
 /**
- * SignalPipe — OpenClaw Plugin v1.6.2
+ * SignalPipe — OpenClaw Plugin v2.0.0
  *
- * Registers 17 tools across two subsystems:
+ * Registers 20 tools across three subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
+ *   Sender tools        — the v4 "send" half: stream approved missions and post
+ *                         them on Reddit with the operator's OWN credentials
+ *
+ * v2.0.0 — the sender lands (SignalPipe v4: "the math runs on us, the sending
+ *   runs on you"). The brain scores, drafts, and approves; the plugin can now
+ *   ALSO send.
+ *   - signalpipe_start_sender / signalpipe_stop_sender / signalpipe_sender_status
+ *     run a background loop that holds an SSE stream to /v4/missions/stream,
+ *     receives pre-approved missions, posts reddit_comment / reddit_dm with the
+ *     operator's own Reddit (snoowrap) credentials, and acks the outcome to
+ *     /v4/missions/{id}/ack. twitter_reply missions are left for the standalone
+ *     signalpipe-daemon. New OPTIONAL env vars REDDIT_CLIENT_ID/SECRET/USERNAME/
+ *     PASSWORD enable the sender; MCP-only operators are unaffected.
+ *   - The sender contains ZERO scoring, drafting, or storage. Reddit creds stay
+ *     on the operator's machine and are never sent to SignalPipe. Within a
+ *     running session each mission is posted at most once (no double-send), even
+ *     across reconnects; daily caps skip (not fail) capped missions.
  *
  * v1.6.2 — docstring + presentation refresh (no tool surface change)
  *   - signalpipe_reject_mission and signalpipe_delete_mission descriptions
@@ -61,8 +79,9 @@ import { registerCompanionTools } from './tools/companion'
 export function register(api: any): void {
   registerAcquisitionTools(api)
   registerCompanionTools(api)
+  registerSenderTools(api)
 
-  console.log('[SignalPipe] Plugin v1.6.2 loaded — 17 tools registered')
+  console.log('[SignalPipe] Plugin v2.0.0 loaded — 20 tools registered (acquisition + companion + sender)')
 }
 
 export default register

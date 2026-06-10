@@ -1,7 +1,7 @@
 {
   "name": "signalpipe",
-  "version": "1.6.2",
-  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts outreach for Reddit and X/Twitter via managed backend, and nurtures prospects from cold to closed.",
+  "version": "2.0.0",
+  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds via a managed brain, drafts outreach for review, and (v2.0) sends approved Reddit replies and DMs with your own credentials. The math runs on us, the sending runs on you.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -32,7 +32,8 @@
     "url": "git+https://github.com/AbYousef739/signalpipe.git"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.49"
+    "@sinclair/typebox": "^0.34.49",
+    "snoowrap": "^1.23.0"
   },
   "openclaw": {
     "extensions": ["./dist/index.js"],

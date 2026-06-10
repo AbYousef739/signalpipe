@@ -22,9 +22,12 @@ Competitor-switch posts are hard-floored and always reach your queue regardless 
 **Mid/bottom of funnel — Nurture Engine:**
 Tracks every prospect's temperature (0–100) across 13 signal types. Automatically selects the right persona (Educator → Consultant → Closer → Re-engager). Remembers objections permanently — if someone said the price is too high, that angle is never repeated. Never spams. One-directional mode transitions.
 
+**Execution — Sender (v2.0):**
+The brain scores, drafts, and approves; the plugin can now also **send**. An optional background sender holds a live stream open to the brain, receives the missions you've already approved, and posts `reddit_comment` / `reddit_dm` on Reddit with **your own** credentials. *The math runs on us, the sending runs on you* — your Reddit credentials and LLM keys never reach SignalPipe. `twitter_reply` is handled by the standalone [`signalpipe-daemon`](https://github.com/AbYousef739/signalpipe-daemon). The sender is opt-in: set the `REDDIT_*` env vars to enable it, or ignore it entirely and stay MCP-only.
+
 ---
 
-## Tools (17 total)
+## Tools (20 total)
 
 ### Signal Acquisition
 
@@ -52,6 +55,16 @@ Tracks every prospect's temperature (0–100) across 13 signal types. Automatica
 | `signalpipe_record_message` | Record a host-LLM-written message as sent |
 | `signalpipe_get_pipeline` | View the full prospect pipeline sorted by temperature |
 | `signalpipe_score_signal` | Universal scorer — paste any text (Gmail, Slack, Discord, Telegram, LinkedIn, transcripts) and get back the same score + classification + drafting context the scout produces for Reddit/HN posts. SignalPipe never touches the source channel; your host agent does. |
+
+### Sender
+
+Reddit-only; requires the optional `REDDIT_*` env vars. Contains no scoring or drafting — it only posts pre-approved missions with your credentials.
+
+| Tool | What it does |
+|---|---|
+| `signalpipe_start_sender` | Start the background sender — streams approved missions and posts `reddit_comment` / `reddit_dm` with your own Reddit creds. Supports `dry_run`. |
+| `signalpipe_stop_sender` | Stop the background sender; unsent approved missions stay queued on the brain |
+| `signalpipe_sender_status` | Report sender state — running / connected, sent / failed / skipped counts this session, plus brain-side queue depth |
 
 ---
 
@@ -203,6 +216,18 @@ claw install signalpipe
 ```bash
 export SIGNALPIPE_API_URL=https://api.signalpipe.io
 export SIGNALPIPE_OPERATOR_KEY=your-operator-key
+```
+
+**Optional — to run the in-plugin Reddit sender (v2.0):** add a Reddit "script" app's credentials (create one at https://www.reddit.com/prefs/apps on the sending account). These stay on your machine and are never sent to SignalPipe.
+
+```bash
+export REDDIT_CLIENT_ID=your-client-id
+export REDDIT_CLIENT_SECRET=your-client-secret
+export REDDIT_USERNAME=your-sending-account
+export REDDIT_PASSWORD=your-password
+# optional caps (defaults shown)
+# export MAX_REDDIT_COMMENTS_PER_DAY=15
+# export MAX_REDDIT_DMS_PER_DAY=5
 ```
 
 ### 4. Configure a product

@@ -1,7 +1,7 @@
 ---
 name: signalpipe
-description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), and nurtures prospects from cold to closed.
-version: 1.6.2
+description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
+version: 2.0.0
 metadata:
   openclaw:
     requires:
@@ -16,9 +16,11 @@ metadata:
 # SignalPipe — Skill Guide for OpenClaw Agents
 
 SignalPipe gives you a full agentic sales pipeline:
-**signal detection → human review → prospect nurturing → pipeline visibility.**
+**signal detection → human review → prospect nurturing → pipeline visibility → sending.**
 
-Two subsystems, seventeen tools. Use them in sequence.
+Three subsystems, twenty tools. Use them in sequence.
+
+> **v2.0.0 — the sender lands.** SignalPipe v4 splits the work cleanly: *the math runs on us, the sending runs on you.* The brain still scores, drafts, and approves; the plugin can now ALSO **send**. Three new tools — `signalpipe_start_sender`, `signalpipe_stop_sender`, `signalpipe_sender_status` — run a background loop that streams pre-approved missions from the brain and posts `reddit_comment` / `reddit_dm` on Reddit with the operator's OWN credentials (a Reddit "script" app set via the optional `REDDIT_*` env vars). `twitter_reply` missions are left for the standalone `signalpipe-daemon`. The sender contains **zero** scoring, drafting, or storage — Reddit credentials stay on the operator's machine and are never sent to SignalPipe. Within a running session each mission is posted at most once (no double-send), even across reconnects; daily caps *skip* (not fail) a capped mission so it stays queued. MCP-only operators who never set `REDDIT_*` are unaffected — the sender simply stays idle. See **Subsystem 3 — Sender** below.
 
 > **v1.6.2 — reject vs delete clarity for stale posts.** When a post is gone by the time the operator gets there (deleted by the poster, 404, removed by mods, or stale beyond the reply window), the lead wasn't bad — the opportunity just evaporated. Use `signalpipe_delete_mission` (no RL penalty), NOT `signalpipe_reject_mission(not_relevant)` (which would penalise a station that did nothing wrong). The tool descriptions and the reject / delete sections below have been clarified accordingly. No tool surface change — this is presentation only, aligning the LLM-facing guidance with mantidae backend v3.7.13 + v3.7.14 (which also added cross-poster dedup and locked swarm temperature to 0.2 for deterministic classification).
 
@@ -279,6 +281,52 @@ Get the full prospect pipeline sorted by temperature.
 
 ---
 
+## Subsystem 3 — Sender (Execution)
+
+The Sender is the v4 "send" half. The brain scores, drafts, and approves missions; the Sender holds a live stream open to the brain, receives the missions it has already approved, and posts them on Reddit using the **operator's OWN** credentials. It never scores, drafts, or stores anything — it only sends.
+
+**Scope:** Reddit only (`reddit_comment` and `reddit_dm`). `twitter_reply` missions are skipped here and left for the standalone `signalpipe-daemon`. `manual` missions are always skipped — the operator sends those by hand.
+
+**Setup:** the Sender needs a Reddit "script" app on the **sending** account, supplied via optional environment variables (see Environment Variables below). If they aren't set, the Sender stays idle and the rest of the plugin works normally. These credentials stay on the operator's machine and are **never** sent to SignalPipe.
+
+**Safety:** the brain only ever streams *approved* missions, so nothing sends without prior human approval. Within a running session each mission is posted at most once — a dropped connection is always safe to recover from. Daily caps pace sending; a capped mission is *skipped* (stays queued for after the next local-midnight reset), not failed.
+
+### Tool: `signalpipe_start_sender`
+Start the background Reddit sender.
+
+**When to call:** User says "start sending", "turn on the sender", "go live", "start posting approved replies".
+
+**Before calling:** Confirm with the user before starting a **live** (non-dry-run) sender — it will post to Reddit. Suggest a `dry_run` first to confirm the stream connects and missions arrive.
+
+**Parameters:**
+- `dry_run` (optional) — log intended sends without posting to Reddit or acking the brain. Default false.
+
+**After calling:** The loop runs in the background until `signalpipe_stop_sender` or a gateway restart. Tell the user it's running and offer `signalpipe_sender_status` to check on it.
+
+---
+
+### Tool: `signalpipe_stop_sender`
+Stop the background Reddit sender.
+
+**When to call:** User says "stop sending", "turn off the sender", "pause posting".
+
+**Effect:** Closes the mission stream cleanly. Missions already posted are unaffected; unsent approved missions stay queued on the brain and deliver next time the sender runs. Stopping and restarting is always safe.
+
+**No parameters.**
+
+---
+
+### Tool: `signalpipe_sender_status`
+Report the sender state.
+
+**When to call:** User asks "is the sender running", "how many has it sent", "is it connected", or right after starting it to confirm it connected.
+
+**Returns:** A `local` block (running, connected, paused, sent / failed / skipped counts this session, last event, last error) and a `brain` block (queue depth, auto-fire threshold, version). Present the local loop state first (running? connected? counts), then the brain queue depth.
+
+**No parameters.**
+
+---
+
 ## Full Workflow Examples
 
 ### New lead comes in from Mantidae
@@ -310,16 +358,25 @@ Get the full prospect pipeline sorted by temperature.
 5. signalpipe_get_missions → review first batch of leads
 ```
 
+### User wants the plugin to auto-send approved Reddit missions
+```
+1. (one-time) Set REDDIT_CLIENT_ID/SECRET/USERNAME/PASSWORD in the environment
+2. signalpipe_start_sender (dry_run=true) → confirm it connects and missions arrive
+3. signalpipe_sender_status → verify connected=true
+4. signalpipe_stop_sender, then signalpipe_start_sender → go live
+5. signalpipe_sender_status → watch sent / failed / skipped counts
+```
+
 ---
 
 ## Backend Lifecycle
 
-When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 17 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 20 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
 🦐 SignalPipe ONLINE
    Backend : https://api.signalpipe.io
-   Tools   : 17 registered (Mantidae + Nurture Engine)
+   Tools   : 20 registered (Mantidae + Nurture Engine + Sender)
    Status  : connected
 ```
 
@@ -335,8 +392,15 @@ Set before starting the OpenClaw gateway:
 |---|---|---|
 | `SIGNALPIPE_API_URL` | Yes | URL of your SignalPipe backend — provided at signup |
 | `SIGNALPIPE_OPERATOR_KEY` | Yes | Your secret operator key — provided at signup from signalpipe.io |
+| `REDDIT_CLIENT_ID` | Sender only | Reddit "script" app client id (sending account) |
+| `REDDIT_CLIENT_SECRET` | Sender only | Reddit "script" app secret |
+| `REDDIT_USERNAME` | Sender only | Reddit username of the sending account |
+| `REDDIT_PASSWORD` | Sender only | Reddit password of the sending account |
+| `REDDIT_USER_AGENT` | No | Defaults to `signalpipe-plugin/2.0` |
+| `MAX_REDDIT_COMMENTS_PER_DAY` | No | Daily comment cap. Default 15 |
+| `MAX_REDDIT_DMS_PER_DAY` | No | Daily DM cap. Default 5 |
 
-That's it for the plugin. All other configuration (LLM keys, outreach credentials, rate limits) is set on the SignalPipe backend — not in OpenClaw. Your OpenClaw LLM key stays inside OpenClaw.
+The two `SIGNALPIPE_*` vars are all the plugin needs for scoring, drafting, and review — your OpenClaw LLM key stays inside OpenClaw and is never shared with SignalPipe. The `REDDIT_*` vars are **optional** and only needed to run the in-plugin Sender (Subsystem 3); they stay on your machine and are **never** sent to SignalPipe. MCP-only operators can ignore them entirely.
 
 ---
 
