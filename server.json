@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AbYousef739/signalpipe",
   "description": "Agentic Reddit/HN buying-signal detection for Claude Code, Cursor, and Windsurf via MCP.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "repository": {
     "url": "https://github.com/AbYousef739/signalpipe",
     "source": "github"

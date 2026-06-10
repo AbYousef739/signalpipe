@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.0.0
+version: 2.0.1
 metadata:
   openclaw:
     requires:
