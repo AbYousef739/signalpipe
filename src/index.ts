@@ -3,13 +3,18 @@ import { registerCompanionTools } from './tools/companion'
 import { registerSenderTools } from './tools/sender'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.0.1
+ * SignalPipe — OpenClaw Plugin v2.0.2
  *
  * Registers 20 tools across three subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
  *   Sender tools        — the v4 "send" half: stream approved missions and post
  *                         them on Reddit with the operator's OWN credentials
+ *
+ * v2.0.2 — docs: cleaned the OpenClaw/ClawHub plugin manifest description
+ *   (openclaw.plugin.json) — dropped config-speak that had leaked env-var
+ *   names and the humanInLoop JSON key into the user-facing blurb. No tool
+ *   surface or behaviour change from v2.0.1.
  *
  * v2.0.1 — first published 2.0 build. Internal scoring constants were removed
  *   from the public docs and tool descriptions; the brain's math stays
@@ -85,7 +90,7 @@ export function register(api: any): void {
   registerCompanionTools(api)
   registerSenderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.0.1 loaded — 20 tools registered (acquisition + companion + sender)')
+  console.log('[SignalPipe] Plugin v2.0.2 loaded — 20 tools registered (acquisition + companion + sender)')
 }
 
 export default register
