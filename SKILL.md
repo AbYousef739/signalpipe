@@ -151,12 +151,25 @@ Register a new product for lead monitoring.
 **When to call:** User wants to start tracking leads for a new product.
 
 **Key parameters:**
-- `anchor_sentences` — most important field. Write them as a buyer speaking:
-  - "I need a tool that does X"
-  - "looking for an alternative to Y"
-  - "where can I find Z"
-- `buy_signal_keywords` — cheap pre-filter keywords (any match = post gets scored)
-- `competitor_keywords` — competitor names to flag
+- `anchor_sentences` — most important field. Every incoming post is scored by
+  similarity to these, so they decide what the user does and doesn't see.
+  Write them as the BUYER describing their PROBLEM, not as the seller
+  describing the product:
+  - ✅ "looking for an alternative to Y, the pricing has gotten absurd"
+  - ✅ "anyone know a tool that does X? doing it by hand is killing me"
+  - ❌ "enterprise-grade X automation platform" → matches sellers, not buyers
+- `buy_signal_keywords` — **leave empty unless you have a specific reason.**
+  This is an optional COST filter, not a quality one, and it's an AND-gate: a
+  post that matches NONE of the keywords scores 0 *before* embedding and
+  *before* the swarm, with nothing logged. In testing, the same sentence scored
+  0 when it said "people" and highly when it said "leads" — one word. You
+  cannot enumerate every phrasing a buyer might use, so a keyword list silently
+  deletes real buyers in proportion to how badly you guessed. The embedding
+  floor, vertical gate and 3-judge swarm still filter without it.
+- `competitor_keywords` — direct SUBSTITUTES only (tools a buyer would choose
+  *instead of* this product). A buyer-intent mention of one floors the score so
+  switchers always surface. Don't list adjacent-category tools that merely sound
+  similar — you'll surface people who were never in your market.
 
 **After calling:** Always call `signalpipe_reload_products` to activate immediately.
 
@@ -168,8 +181,22 @@ Add an RSS feed or search source to monitor for a product.
 **When to call:** User wants to monitor a new subreddit, Hacker News keyword, or RSS feed.
 
 **Common patterns:**
-- Reddit: `https://www.reddit.com/r/SUBREDDIT/.rss`
+- Reddit: `https://www.reddit.com/r/SUBREDDIT/new/.rss` — use `/new/`, not the
+  bare `/.rss`. Bare returns the *hot* listing (popular, already-answered
+  posts); `/new/` returns fresh ones, and scoring rewards recency heavily.
 - Hacker News: `https://hnrss.org/newest?q=YOUR+KEYWORDS`
+
+**Choosing stations matters more than any setting:**
+- Prefer **broad communities where buyers describe problems** over narrow
+  keyword or tool-name searches. Broad feeds produce the overwhelming majority
+  of real leads; narrow keyword feeds frequently produce none at all.
+- Go where the buyer *complains*, not where the industry talks shop. Vendor and
+  founder communities are dense with people **building** things like the user's
+  product (correctly filtered out as sellers) and thin on actual buyers.
+- 3–5 well-chosen feeds beat 20. Every feed costs a fetch per cycle and sources
+  rate-limit; more stations mainly buys more noise.
+- Ask the user where their customers actually hang out. A guessed subreddit list
+  is the most common cause of an empty queue.
 
 **Parameters:**
 - `product_id` — from `signalpipe_get_products`
