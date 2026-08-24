@@ -1,12 +1,15 @@
 {
   "id": "signalpipe",
   "name": "SignalPipe",
-  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts outreach for Reddit and X/Twitter, and nurtures prospects from cold to closed. Nothing sends without your approval.",
+  "description": "Buying-intent scoring for your agent. Detects buyers on Reddit, HN and any RSS feed, and scores arbitrary text your agent already reads — email, Slack, Discord, tickets — through a three-judge panel, then drafts outreach. Nothing sends without your approval.",
   "humanInLoop": true,
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["apiUrl", "operatorKey"],
+    "required": [
+      "apiUrl",
+      "operatorKey"
+    ],
     "properties": {
       "apiUrl": {
         "type": "string",

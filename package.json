@@ -1,7 +1,7 @@
 {
   "name": "signalpipe",
-  "version": "2.0.2",
-  "description": "Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds via a managed brain, drafts outreach for review, and (v2.0) sends approved Reddit replies and DMs with your own credentials. The math runs on us, the sending runs on you.",
+  "version": "2.0.3",
+  "description": "Buying-intent scoring for AI agents. Score any text — Reddit, HN, RSS, email, Slack, Discord, support tickets — through a three-judge panel that separates real buyers from sellers, competitors and noise, then drafts a reply for your approval. MCP-native. The judgement runs on us, the sending runs on you.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -17,12 +17,22 @@
   "keywords": [
     "openclaw",
     "clawhub",
-    "agentic",
+    "mcp",
+    "buyer-intent",
+    "intent-scoring",
+    "intent-classification",
+    "buying-signals",
     "lead-generation",
+    "lead-qualification",
     "sales-pipeline",
-    "human-in-the-loop",
     "signal-detection",
-    "prospect-nurturing"
+    "prospect-nurturing",
+    "churn-detection",
+    "agentic",
+    "human-in-the-loop",
+    "reddit",
+    "hacker-news",
+    "rss"
   ],
   "author": "SignalPipe <contact@signalpipe.io>",
   "license": "MIT",
@@ -36,7 +46,9 @@
     "snoowrap": "^1.23.0"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": [
+      "./dist/index.js"
+    ],
     "requires": {
       "env": [
         "SIGNALPIPE_API_URL",

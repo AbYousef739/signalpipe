@@ -247,6 +247,13 @@ Score arbitrary text against a product profile — the same scoring engine the s
 - `content_score` — pre-RL content score (honest about what's in the text)
 - `classification` — `buying_intent` · `borderline` · `competitor_mention` · `noise`
 - `role` — `closer` (highest-intent) · `advisor` (mid-intent) · `educator` (early-stage)
+- `swarm` — the judge panel's read: `judges` (each of `skeptic` / `analyst` / `optimist` as
+  `convinced` · `on the fence` · `unconvinced`) and `split` (true when the panel disagreed
+  materially). A split panel is the case worth a human glance — it is exactly where one-shot
+  prompting is unreliable. Stances only; the panel's internal numerics are not returned.
+- `swarm_ran` — whether the panel was consulted for this call. Clear-cut text is decided on
+  content alone and does not spend three judge calls
+- `source_hint` — echoed back so you can key off it when routing the reply
 - `sub_scores` — `urgency`, `specificity`, `keyword_density` for explainability
 - `competitor_match`, `competitor_name`, `competitor_intent` — competitor detection + intent (complaining / replacing / comparing / neutral)
 - `sarcastic` — boolean; sarcastic text scores 0 regardless of surface signal
