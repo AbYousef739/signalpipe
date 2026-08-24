@@ -1,7 +1,7 @@
 ---
 name: signalpipe
-description: Agentic sales pipeline — detects buying-intent signals on Reddit, HN, and RSS feeds, drafts replies (server-side or client-side via host LLM), nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.0.2
+description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
+version: 2.0.3
 metadata:
   openclaw:
     requires:
@@ -19,6 +19,8 @@ SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility → sending.**
 
 Three subsystems, twenty tools. Use them in sequence.
+
+> **v2.0.3 — score_signal is documented, and the listing says what this is.** The `Returns` block for `signalpipe_score_signal` never mentioned `swarm`, `swarm_ran` or `source_hint`; the three-judge verdict is the thing that makes the score worth trusting and the contract was silent on it. Now documented as each judge's stance plus a `split` flag — a split panel is the case worth a human glance. The panel's internal numerics are not returned and are not documented as though they were. The npm/ClawHub blurb also stopped describing a Reddit scraper: `score_signal` takes text from any channel the host agent can read, and the listing now leads with that. No tool surface or behaviour change.
 
 > **v2.0.0 — the sender lands.** SignalPipe v4 splits the work cleanly: *the math runs on us, the sending runs on you.* The brain still scores, drafts, and approves; the plugin can now ALSO **send**. Three new tools — `signalpipe_start_sender`, `signalpipe_stop_sender`, `signalpipe_sender_status` — run a background loop that streams pre-approved missions from the brain and posts `reddit_comment` / `reddit_dm` on Reddit with the operator's OWN credentials (a Reddit "script" app set via the optional `REDDIT_*` env vars). `twitter_reply` missions are left for the standalone `signalpipe-daemon`. The sender contains **zero** scoring, drafting, or storage — Reddit credentials stay on the operator's machine and are never sent to SignalPipe. Within a running session each mission is posted at most once (no double-send), even across reconnects; daily caps *skip* (not fail) a capped mission so it stays queued. MCP-only operators who never set `REDDIT_*` are unaffected — the sender simply stays idle. See **Subsystem 3 — Sender** below.
 

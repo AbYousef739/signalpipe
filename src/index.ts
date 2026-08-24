@@ -3,13 +3,23 @@ import { registerCompanionTools } from './tools/companion'
 import { registerSenderTools } from './tools/sender'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.0.2
+ * SignalPipe — OpenClaw Plugin v2.0.3
  *
  * Registers 20 tools across three subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
  *   Sender tools        — the v4 "send" half: stream approved missions and post
  *                         them on Reddit with the operator's OWN credentials
+ *
+ * v2.0.3 — docs + listing. The npm/ClawHub description read as a Reddit/HN
+ *   scraper and never mentioned signalpipe_score_signal, so the capability
+ *   that accepts text from ANY channel the host agent can read was invisible
+ *   to anyone searching for intent scoring. Description and keywords now lead
+ *   with the scoring, feeds as one source among several. SKILL.md also now
+ *   documents what score_signal actually returns — `swarm` (each judge's
+ *   stance plus a `split` flag), `swarm_ran` and `source_hint` — which were
+ *   undocumented. Stances only; the panel's numerics are not returned. No
+ *   tool surface or behaviour change from v2.0.2.
  *
  * v2.0.2 — docs: cleaned the OpenClaw/ClawHub plugin manifest description
  *   (openclaw.plugin.json) — dropped config-speak that had leaked env-var
