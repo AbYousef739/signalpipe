@@ -198,9 +198,7 @@ Draft   : [Swarm low-confidence — auto-rejected]
 
 ### 1. Get a backend + operator key
 
-**Managed (recommended):** Join the waitlist at [signalpipe.io](https://signalpipe.io) — you get a `SIGNALPIPE_OPERATOR_KEY` and backend URL. No infrastructure to manage.
-
-**Self-hosted:** See [Self-Hosting](#self-hosting) below.
+Subscribe at [signalpipe.io](https://signalpipe.io/#pricing), sign in to the [console](https://signalpipe.io/dashboard) with the email you paid with, and create your `SIGNALPIPE_OPERATOR_KEY` there (it is shown once). The backend URL is `https://api.signalpipe.io`. No infrastructure to manage.
 
 ### 2. Install
 
@@ -288,34 +286,25 @@ real signal lands.
 
 ---
 
-## Managed Backend Tiers
+## Pricing
 
-| Tier | Price | Products | Leads/day | Prospects |
-|---|---|---|---|---|
-| BYOK | $19/mo | 3 | 50 | 1,000 |
-| Starter | $49/mo | 2 | 25 | 500 |
-| Growth | $149/mo | 10 | 250 | 5,000 |
-| Scale | $499/mo | Unlimited | Unlimited | Unlimited |
+The plugin and the daemon are free and MIT licensed. The managed brain — scoring and drafting — is a subscription, metered in **judgements** (one three-judge panel run). Text that is clearly noise or clearly a buyer is decided without convening the panel and spends nothing.
 
-Annual billing available — 2 months free (17% off). First 100 waitlist signups: 50% off for 3 months.
+| Plan | Price | Judgements / month |
+|---|---|---|
+| Starter | $29/mo | 3,000 |
+| Growth | $79/mo | 9,000 |
 
-[View pricing →](https://signalpipe.io/pricing)
+Billed monthly through Stripe; cancel any time from your billing page. Every scoring call returns how much of the month is left. Current details: [signalpipe.io/#pricing](https://signalpipe.io/#pricing).
 
 ---
 
-## Self-Hosting
+## Sending from your own accounts
 
-The backend is a FastAPI app. Requirements:
-- Python 3.11+
-- PostgreSQL with `pg_cron` and `pg_net` (Supabase recommended)
-- A host that supports long-running processes (Railway recommended)
-- OpenAI API key (embeddings)
-
-Full setup guide: [signalpipe.io/guide#self-hosting](https://signalpipe.io/guide#self-hosting)
+The in-plugin sender posts approved missions with a Reddit **script app** on your account. Since 11 November 2025 Reddit issues new API apps only after a manual approval, so if you do not already have one, skip the sender: approve drafts in your agent, post them yourself, and the queue works the same. X sending lives in [signalpipe-daemon](https://github.com/AbYousef739/signalpipe-daemon) and needs a paid (pay-per-use) X API account.
 
 ---
 
 ## License
 
-Plugin: MIT  
-Backend: Business Source License 1.1 (converts to Apache 2.0 after 4 years)
+Plugin: MIT. The managed brain is a hosted service and is not distributed.

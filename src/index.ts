@@ -3,13 +3,21 @@ import { registerCompanionTools } from './tools/companion'
 import { registerSenderTools } from './tools/sender'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.0.3
+ * SignalPipe — OpenClaw Plugin v2.0.4
  *
  * Registers 20 tools across three subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
  *   Sender tools        — the v4 "send" half: stream approved missions and post
  *                         them on Reddit with the operator's OWN credentials
+ *
+ * v2.0.4 — post-launch audit (2026-09-24). README pricing/waitlist replaced
+ *   with the live plans ($29 Starter / $79 Growth, metered in judgements);
+ *   the private-backend "self-hosting" and BSL claims removed; scout cadence
+ *   corrected to 30 minutes (said 10); scout_now documented as scoped to your
+ *   own products with a 15-minute cooldown (backend change, same date); the
+ *   startup log line reported v2.0.2 in a v2.0.3 build. Reddit's Nov 2025 API
+ *   approval requirement documented for the sender. No tool surface change.
  *
  * v2.0.3 — docs + listing. The npm/ClawHub description read as a Reddit/HN
  *   scraper and never mentioned signalpipe_score_signal, so the capability
@@ -100,7 +108,7 @@ export function register(api: any): void {
   registerCompanionTools(api)
   registerSenderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.0.2 loaded — 20 tools registered (acquisition + companion + sender)')
+  console.log('[SignalPipe] Plugin v2.0.4 loaded — 20 tools registered (acquisition + companion + sender)')
 }
 
 export default register

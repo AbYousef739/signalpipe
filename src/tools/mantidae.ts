@@ -256,8 +256,9 @@ export function registerAcquisitionTools(openClaw: any): void {
   openClaw.registerTool({
     name: 'signalpipe_scout_now',
     description:
-      'Trigger an immediate scouting run across all active products and RSS stations. ' +
-      'Normally runs automatically every 10 minutes. Call this for an on-demand scan.',
+      'Trigger an immediate scouting run across your active products and RSS stations. ' +
+      'Runs automatically every 30 minutes; on-demand scans are limited to one per 15 minutes ' +
+      '(a "skipped" status with reason cooldown or batch_in_progress is normal).',
     parameters: Type.Object({}),
     async execute(_id: string) {
       try { return ok(await api.post('/scout/launch_batch')) } catch (e) { return err(e) }

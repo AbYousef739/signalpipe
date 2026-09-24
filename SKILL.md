@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.0.3
+version: 2.0.4
 metadata:
   openclaw:
     requires:
@@ -134,7 +134,7 @@ Hard-delete a mission row — silent queue cleanup, no learning signal.
 Trigger an immediate scouting run.
 
 **When to call:** User says "check for new leads now", "run a fresh scan", "scout immediately".
-Normally scouts run automatically every 10 minutes — only call this for on-demand runs.
+Scouts run automatically every 30 minutes — only call this for on-demand runs. It scans the user's own products, at most once every 15 minutes; a `skipped` status with reason `cooldown` or `batch_in_progress` is normal, not an error.
 
 **No parameters.**
 
@@ -457,7 +457,7 @@ If a tool call returns an error, follow this decision tree before doing anything
 
 ### `signalpipe_get_missions` returns empty array
 - This is normal — no leads yet. Do not tell the user something is broken.
-- Say: *"No pending leads right now. The system scouts every 10 minutes. You can trigger an immediate scan with `signalpipe_scout_now`."*
+- Say: *"No pending leads right now. The system scouts every 30 minutes. You can trigger an immediate scan with `signalpipe_scout_now`."*
 
 ### `signalpipe_add_product` fails with HTTP 400
 - A required field is missing. The error message will name the field. Ask the user for the missing value and retry.
