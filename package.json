@@ -1,6 +1,6 @@
 {
   "name": "signalpipe",
-  "version": "2.0.5",
+  "version": "2.1.0",
   "description": "Buying-intent scoring for AI agents. Score any text — Reddit, HN, RSS, email, Slack, Discord, support tickets — through a three-judge panel that separates real buyers from sellers, competitors and noise, and hands your agent what it needs to draft the reply. MCP-native. The judgement runs on us, the sending runs on you.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "test": "tsc && node --test test/*.test.js",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },

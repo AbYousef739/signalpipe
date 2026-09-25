@@ -1,15 +1,39 @@
 import { registerAcquisitionTools } from './tools/mantidae'
 import { registerCompanionTools } from './tools/companion'
 import { registerSenderTools } from './tools/sender'
+import { registerReaderTools } from './tools/reader'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.0.5
+ * SignalPipe — OpenClaw Plugin v2.1.0
  *
- * Registers 20 tools across three subsystems:
- *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
- *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
+ * Registers 29 tools across four subsystems:
+ *   Acquisition tools   — top-of-funnel: product + station setup → signal
+ *                         detection → mission review → drafting
+ *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → replies →
+ *                         pipeline → messaging
  *   Sender tools        — the v4 "send" half: stream approved missions and post
  *                         them on Reddit with the operator's OWN credentials
+ *   Reader tools        — client-side reading and feed preview: fetch feeds on
+ *                         this machine and send the posts to the brain for judging
+ *
+ * v2.1.0 (2026-09-26). Client-side reading, plus everything the brain could do
+ *   that no plugin tool reached, from the 2026-09-25 brain audit:
+ *   - signalpipe_read_feeds reads the stations the brain marks read_by:
+ *     "client" from this machine and hands each page to POST /scout/ingest.
+ *     Dependency-free RSS/Atom parsing (src/reader/feed.ts).
+ *   - signalpipe_preview_station checks a feed for buyers before it is added
+ *     (read here, judged by the brain, nothing saved).
+ *   - signalpipe_record_reply sends a prospect's reply to the brain, which
+ *     reads it: intent, objections, do-not-contact, and whether they invited a
+ *     private message.
+ *   - signalpipe_suggest_anchors, signalpipe_mark_sent, signalpipe_list_stations
+ *     (with health), signalpipe_update_product, signalpipe_update_station and
+ *     signalpipe_remove_station: set-up and upkeep without SQL.
+ *   - signalpipe_score_signal takes `context` (the post a reply answers) and
+ *     returns panel_verdict; calls that wait on the judges get a 60-second
+ *     timeout instead of 10.
+ *   - add_station guidance now says /new/.rss (the bare /.rss is the HOT
+ *     listing) and add_product warns that buy_signal_keywords drop posts.
  *
  * v2.0.5 — README corrections (2026-09-25). The README said SignalPipe scouts
  *   X/Twitter; it never has (X has no feed to read, so the agent brings X posts
@@ -114,8 +138,9 @@ export function register(api: any): void {
   registerAcquisitionTools(api)
   registerCompanionTools(api)
   registerSenderTools(api)
+  registerReaderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.0.5 loaded — 20 tools registered (acquisition + companion + sender)')
+  console.log('[SignalPipe] Plugin v2.1.0 loaded — 29 tools registered (acquisition + companion + sender + reader)')
 }
 
 export default register

@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.0.5
+version: 2.1.0
 metadata:
   openclaw:
     requires:
@@ -18,7 +18,9 @@ metadata:
 SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility → sending.**
 
-Three subsystems, twenty tools. Use them in sequence.
+Four subsystems, twenty-nine tools. Use them in sequence.
+
+> **v2.1.0 — client-side reading, feed preview, replies, and set-up tools.** New tool `signalpipe_read_feeds` reads the stations your brain marks `read_by: "client"` from this machine and sends each feed page to the brain for judging; the brain scores the posts exactly as if its own scout had read them. No credentials and no new dependencies (the RSS/Atom parsing is built in). `signalpipe_preview_station` checks a feed for buyers before it is added. `signalpipe_record_reply` hands a prospect's reply to the brain, which reads it (intent, objections, do-not-contact, and whether they invited a private message). `signalpipe_suggest_anchors`, `signalpipe_mark_sent`, `signalpipe_list_stations`, `signalpipe_update_product`, `signalpipe_update_station` and `signalpipe_remove_station` cover set-up and upkeep. `signalpipe_score_signal` takes `context` and returns `panel_verdict`.
 
 > **v2.0.5 — README matches the code.** SignalPipe does not read X: your agent brings X posts through your own X API access, and the optional scout reads the RSS or Atom feeds you choose. Install with `openclaw plugins install signalpipe` (or `clawhub:signalpipe`). Private messages go only to someone who asked for one, and the backend never auto-sends an X reply or a DM, whatever your auto-send setting (backend change, 2026-09-25). No tool surface change.
 
@@ -26,7 +28,7 @@ Three subsystems, twenty tools. Use them in sequence.
 
 > **v2.0.0 — the sender lands.** SignalPipe v4 splits the work cleanly: *the math runs on us, the sending runs on you.* The brain still scores, drafts, and approves; the plugin can now ALSO **send**. Three new tools — `signalpipe_start_sender`, `signalpipe_stop_sender`, `signalpipe_sender_status` — run a background loop that streams pre-approved missions from the brain and posts `reddit_comment` / `reddit_dm` on Reddit with the operator's OWN credentials (a Reddit "script" app set via the optional `REDDIT_*` env vars). `twitter_reply` missions are left for the standalone `signalpipe-daemon`. The sender contains **zero** scoring, drafting, or storage — Reddit credentials stay on the operator's machine and are never sent to SignalPipe. Within a running session each mission is posted at most once (no double-send), even across reconnects; daily caps *skip* (not fail) a capped mission so it stays queued. MCP-only operators who never set `REDDIT_*` are unaffected — the sender simply stays idle. See **Subsystem 3 — Sender** below.
 
-> **v1.6.2 — reject vs delete clarity for stale posts.** When a post is gone by the time the operator gets there (deleted by the poster, 404, removed by mods, or stale beyond the reply window), the lead wasn't bad — the opportunity just evaporated. Use `signalpipe_delete_mission` (no RL penalty), NOT `signalpipe_reject_mission(not_relevant)` (which would penalise a station that did nothing wrong). The tool descriptions and the reject / delete sections below have been clarified accordingly. No tool surface change — this is presentation only, aligning the LLM-facing guidance with mantidae backend v3.7.13 + v3.7.14 (which also added cross-poster dedup and locked swarm temperature to 0.2 for deterministic classification).
+> **v1.6.2 — reject vs delete clarity for stale posts.** When a post is gone by the time the operator gets there (deleted by the poster, 404, removed by mods, or stale beyond the reply window), the lead wasn't bad — the opportunity just evaporated. Use `signalpipe_delete_mission` (no RL penalty), NOT `signalpipe_reject_mission(not_relevant)` (which would penalise a station that did nothing wrong). The tool descriptions and the reject / delete sections below have been clarified accordingly. No tool surface change — this is presentation only, aligning the LLM-facing guidance with mantidae backend v3.7.13 + v3.7.14 (which also added cross-poster dedup and set the judges' temperature to 0.2, raised back to 0.7 in v3.7.17).
 
 > **v1.6.0 — universal signal scoring.** New `signalpipe_score_signal` exposes the scout's scoring engine for arbitrary text from any channel your host agent can read (Gmail, Slack, Discord, Telegram, LinkedIn, web pages, transcripts). You paste content, you get back score, classification, role, sub-scores, competitor info, and a drafting context block for client-side replies — without polling a feed or creating a mission. Lives in the Companion subsystem because the use-case is multi-channel and mid-funnel.
 
@@ -142,10 +144,28 @@ Scouts run automatically every 30 minutes — only call this for on-demand runs.
 
 ---
 
+### Tool: `signalpipe_mark_sent`
+Record that the user already replied to a lead by hand.
+
+**When to call:** The moment the user has posted the reply or sent the message themselves through the platform (most first touches are manual public replies). It marks the mission sent, records the outreach so follow-up drafts know what was said (creating the prospect), and counts as a positive signal for the source feed. `signalpipe_approve_mission` is different: it queues the mission for the sender.
+
+**Parameters:** `mission_id`.
+
+---
+
 ### Tool: `signalpipe_get_products`
 List all active products being monitored.
 
 **When to call:** User asks "what products do you track", "show me my products", or before adding a station (you need the `product_id`).
+
+---
+
+### Tool: `signalpipe_suggest_anchors`
+Draft buyer-voice anchor sentences for a product. Call it before `signalpipe_add_product`.
+
+**Flow:** ask the user what the product is, who buys it and what it does for them; call this; SHOW the anchors and invite edits (they know their buyers' words better than any model); then add the product with the approved list.
+
+**Parameters:** `name`, `value_prop`, optional `target_audience`, `description`, `count` (default 8).
 
 ---
 
@@ -179,10 +199,17 @@ Register a new product for lead monitoring.
 
 ---
 
+### Tool: `signalpipe_update_product`
+Edit a product, or pause and resume it. Only the fields passed change.
+
+**When to call:** The user wants to change anchors, the description or keywords, or to pause a product (`active: false`: its stations stop being read and score_signal stops accepting it) or resume it. Anchors follow the add_product rules, and the previous set is kept so a bad edit can be undone. Products are paused, never deleted. Confirm with the user before changing anchors or pausing.
+
+---
+
 ### Tool: `signalpipe_add_station`
 Add an RSS feed or search source to monitor for a product.
 
-**When to call:** User wants to monitor a new subreddit, Hacker News keyword, or RSS feed.
+**When to call:** User wants to monitor a new subreddit, Hacker News keyword, or RSS feed. Run `signalpipe_preview_station` on it first, and add it only if the verdict is VIABLE or MARGINAL. The URL must be http(s) on a public host; the reply includes the new station's id.
 
 **Common patterns:**
 - Reddit: `https://www.reddit.com/r/SUBREDDIT/new/.rss` — use `/new/`, not the
@@ -209,6 +236,29 @@ Add an RSS feed or search source to monitor for a product.
 
 ---
 
+### Tool: `signalpipe_list_stations`
+The user's feeds with a health readout for the last two weeks.
+
+**When to call:** The user asks why the queue is quiet, which feeds work, or before editing a feed. Each station shows posts captured, how many reached the queue, empty or rate-limited fetches, `read_by` (server or this machine) and a plain-language verdict, e.g. "Posts are arriving but none matched your product: change the anchor sentences".
+
+**Parameters:** optional `product_id`.
+
+---
+
+### Tool: `signalpipe_update_station`
+Pause, resume, rename or re-point a feed. Only the fields passed change; a new `rss_url` is checked before it is saved.
+
+**Parameters:** `station_id` (from `signalpipe_list_stations`), optional `active`, `name`, `rss_url`, `keyword`.
+
+---
+
+### Tool: `signalpipe_remove_station`
+Remove a feed. Confirm with the user first. A feed that never produced a lead is deleted; one that did is switched off instead to keep its history, and the reply says which.
+
+**Parameters:** `station_id`.
+
+---
+
 ### Tool: `signalpipe_reload_products`
 Hot-reload the product cache after adding or editing products.
 
@@ -222,15 +272,15 @@ Hot-reload the product cache after adding or editing products.
 
 The Companion nurtures prospects from first contact to close. It tracks a **temperature** (0–100) for each prospect and selects the right message persona automatically.
 
-| Temperature | Mode | Persona |
+| Mode | When | Persona |
 |---|---|---|
-| 10 (initial) | `nurture` | Educator — introduce value, no pressure |
-| 0–29 | `recovery` | Re-engager — re-spark cold leads, no hard sell |
-| 30–74 | `sales` | Consultant — qualify, show fit, build trust |
-| 75–100 | `closing` | Closer — urgency, social proof, clear CTA |
+| `nurture` | New prospect (temperature 10), no engagement yet | Educator — introduce value, no pressure |
+| `sales` | Engaged, and temperature reached 50 | Consultant — qualify, show fit, build trust |
+| `closing` | Temperature ≥ 75 | Closer — urgency, social proof, clear CTA |
+| `recovery` | Cooled after engaging, or an explicit cooling signal (ghosted, not interested, bad timing) | Re-engager — re-spark cold leads, no hard sell |
+| `dead` | Asked not to be contacted | None — never message them again; drafting is refused |
 
-New prospects start in `nurture` mode (temperature 10) until their first positive signal.
-Temperature transitions: ≥75 → closing · ≥30 → sales · <30 → recovery
+Mode is intent-based, not pure temperature: a new prospect stays in `nurture` until a real signal lands.
 
 ---
 
@@ -245,6 +295,7 @@ Score arbitrary text against a product profile — the same scoring engine the s
 - `text` — content to score (truncated server-side to 4000 chars)
 - `product_id` — from `signalpipe_get_products`. Same text scores differently against different products
 - `source_hint` (optional) — channel label (`gmail` | `slack` | `discord` | `telegram` | `linkedin` | `whatsapp` | `twitter` | `reddit` | …). Affects drafting tone, not the score
+- `context` (optional) — the post, thread or email the text replies to (up to 2,000 chars). Pass it whenever you score a reply or comment: "same problem here, what did you end up using?" means little alone and is clear under the post it answers. The judges see it as background; the score stays about the text's own author
 
 **Returns:**
 - `score` — 0–100 weighted score (after RL multiplier, clamped)
@@ -257,6 +308,9 @@ Score arbitrary text against a product profile — the same scoring engine the s
   prompting is unreliable. Stances only; the panel's internal numerics are not returned.
 - `swarm_ran` — whether the panel was consulted for this call. Clear-cut text is decided on
   content alone and does not spend three judge calls
+- `panel_verdict` — what the judges concluded: `kept`, `rejected` or `not_run`. The judges can
+  raise a score but never lower it, so a post they rejected can still read `borderline`. Treat
+  `rejected` as not a lead whatever the score
 - `source_hint` — echoed back so you can key off it when routing the reply
 - `sub_scores` — `urgency`, `specificity`, `keyword_density` for explainability
 - `competitor_match`, `competitor_name`, `competitor_intent` — competitor detection + intent (complaining / replacing / comparing / neutral)
@@ -274,7 +328,7 @@ Many flows use both: score the inbound text first, then track the prospect if th
 ### Tool: `signalpipe_track_prospect`
 Log a signal from a prospect and update their temperature.
 
-**When to call:** Any time a prospect takes an action — replies, ghosts, asks about price, books a demo, etc. Creates the prospect automatically if they are new.
+**When to call:** Any time a prospect takes an action — ghosts, asks about price, books a demo, etc. Creates the prospect automatically if they are new. When you have the text of their reply, use `signalpipe_record_reply` instead.
 
 **Parameters:**
 - `handle` — Twitter handle, Reddit username, email, etc.
@@ -285,10 +339,22 @@ Log a signal from a prospect and update their temperature.
   - **Strong negative:** `not_interested` | `bad_timing` | `ghosted_7_days`
   - **Negative:** `too_expensive` | `competitor` | `ghosted_3_days` | `no_time`
   - **Neutral:** `not_decision_maker`
+  - **Final:** `opted_out` — they asked not to be contacted; the prospect becomes `dead` and no further message is drafted
 - `product_id` (optional) — from `signalpipe_get_products`
 - `mission_id` (optional) — if this prospect came from a Mantidae mission
 
 **Returns:** New temperature, mode, and recommended follow-up timing.
+
+---
+
+### Tool: `signalpipe_record_reply`
+Hand a prospect's reply to the brain, which reads it.
+
+**When to call:** Whenever a tracked prospect writes back (a comment reply, a DM, an email). Paste the reply as they wrote it.
+
+**Parameters:** `prospect_id`, `reply_text`, optional `channel`.
+
+**Returns:** `intent` (buy, interested, objection, not_now, unsubscribe, neutral…), the new `mode`, updated `objections`, `do_not_contact` (true when they asked not to be contacted: stop, never message them again) and `invites_private_contact` (true only when this reply explicitly asks to continue in private, such as "DM me"). Reddit and X require that consent before an app sends a private message, so never suggest a DM without it.
 
 ---
 
@@ -315,7 +381,7 @@ Get the full prospect pipeline sorted by temperature.
 
 **When to call:** User asks "how is my pipeline", "who should I follow up with", "show me my hot prospects", "pipeline summary".
 
-**Returns:** All prospects sorted hottest first, plus counts per mode (nurture / sales / closing / recovery).
+**Returns:** All prospects sorted hottest first, plus counts per mode (nurture / sales / closing / recovery) and `do_not_contact` for prospects who asked not to be contacted.
 
 ---
 
@@ -327,7 +393,7 @@ The Sender is the v4 "send" half. The brain scores, drafts, and approves mission
 
 **Setup:** the Sender needs a Reddit "script" app on the **sending** account, supplied via optional environment variables (see Environment Variables below). If they aren't set, the Sender stays idle and the rest of the plugin works normally. These credentials stay on the operator's machine and are **never** sent to SignalPipe.
 
-**Safety:** the brain only ever streams *approved* missions, so nothing sends without prior human approval. Within a running session each mission is posted at most once — a dropped connection is always safe to recover from. Daily caps pace sending; a capped mission is *skipped* (stays queued for after the next local-midnight reset), not failed.
+**Safety:** the brain only ever streams *approved* missions. Public Reddit comments, X replies and DMs are never auto-approved, whatever the account's auto-send setting, so each of those waits for a person. The drafts are written by AI: Reddit asks that AI-generated content be disclosed and acts against automated posting, so have the user read and edit each draft before approving it. Within a running session each mission is posted at most once — a dropped connection is always safe to recover from. Daily caps pace sending; a capped mission is *skipped* (stays queued for after the next local-midnight reset), not failed.
 
 ### Tool: `signalpipe_start_sender`
 Start the background Reddit sender.
@@ -365,38 +431,81 @@ Report the sender state.
 
 ---
 
+## Subsystem 4 — Reader (Client-side reading)
+
+Some stations can be read from the operator's own machine instead of by the brain: `/stations/list` marks them `read_by: "client"`. The reader fetches those feeds from here and hands each page to the brain, which scores the posts as if its own scout had read them. It needs no credentials and contains no scoring.
+
+### Tool: `signalpipe_read_feeds`
+Read the stations marked for this machine and send the posts to the brain for judging.
+
+**When to call:** The user asks to read their feeds now, or `/stations/list` shows stations with `read_by: "client"`. Call it with no parameters first: the result shows how many feeds are marked for this machine.
+
+**Parameters:**
+- `every_minutes` (optional, integer, 10 or more): keep reading in the background on this interval. The brain's own scout runs every 30 minutes.
+- `stop` (optional, boolean): stop the background reader.
+
+**Returns:** With no parameters, the counts for one pass: client stations, feeds sent, posts sent, empty feeds, skipped and errors. A feed the brain judged a few minutes ago is skipped on cooldown, which is normal. With `every_minutes` or `stop`, the reader's state (running, interval, passes, last counts, last error).
+
+**After calling:** Missions from these posts reach the queue like any other; offer `signalpipe_get_missions`.
+
+---
+
+### Tool: `signalpipe_preview_station`
+Check a feed for buyers before adding it as a station.
+
+**When to call:** Before `signalpipe_add_station`, or when the user asks whether a community is worth listening to. The feed is read on this machine, the brain scores its fresh posts, and the three judges read the best-matching ones (default 8, one judgement each). Nothing is saved.
+
+**Parameters:** `product_id`, `rss_url`, optional `sample` (1-12).
+
+**Returns:** a `verdict` fixed by pre-set thresholds — VIABLE (worth adding), MARGINAL (a trickle), ON-TOPIC, NOT IN-MARKET (topic talk, no buyers: try a different community), NO BUYERS, or NO DATA (nothing could be judged; the explanation says why, such as an empty or stale feed or keywords that blocked every post) — with an `explanation`, feed counts, and a `sample` of judged posts (kept or rejected, with the judges' stances). Suggest adding the feed only for VIABLE or MARGINAL.
+
+---
+
 ## Full Workflow Examples
 
 ### New lead comes in from Mantidae
 ```
 1. signalpipe_get_missions → show user pending leads
-2. User reviews each → approve or reject
-3. signalpipe_approve_mission (with optional edited draft)
-4. signalpipe_track_prospect (handle=..., signal="replied", mission_id=...)
-   → prospect is now in the Companion system
-5. signalpipe_get_message → generate warm first follow-up
-6. Present message to user for review
+2. User reviews each → reject, or edit the draft in their own words
+3a. User replies by hand → signalpipe_mark_sent (records the send, creates the prospect)
+3b. Or the sender should post it → signalpipe_approve_mission (with the edited draft)
+4. The person writes back → signalpipe_record_reply (prospect_id, reply_text)
+   → temperature, mode, objections and do-not-contact update from what they said
+5. signalpipe_get_message → a follow-up that fits their reply
+6. Present the message to the user for review
 ```
 
 ### User wants to follow up on their pipeline
 ```
-1. signalpipe_get_pipeline → show sorted prospects
+1. signalpipe_get_pipeline → show sorted prospects (skip anyone in do_not_contact)
 2. User picks a prospect to message
 3. signalpipe_get_message → generate context-aware message
 4. User reviews and sends
-5. signalpipe_track_prospect → log the outcome (replied, ghosted, etc.)
+5. They reply → signalpipe_record_reply; they go quiet → signalpipe_track_prospect (ghosted_3_days / ghosted_7_days)
 ```
 
 ### User adds a new product
 ```
-1. signalpipe_add_product → fill all fields, anchor sentences are key
-2. signalpipe_reload_products → activate immediately
-3. signalpipe_add_station → add a Reddit or HN feed
-4. signalpipe_scout_now → run first scan immediately
-5. signalpipe_get_missions → review first batch of leads
+1. Ask what it is, who buys it, and what it does for them
+2. signalpipe_suggest_anchors → show the anchors, let the user edit them
+3. signalpipe_add_product → with the approved anchors (leave buy_signal_keywords empty)
+4. signalpipe_reload_products → activate immediately
+5. Ask where their buyers complain; for each candidate feed:
+   signalpipe_preview_station → add only VIABLE or MARGINAL feeds with signalpipe_add_station
+6. signalpipe_scout_now → run first scan immediately
+7. signalpipe_get_missions → review first batch of leads
 ```
 
-### User wants the plugin to auto-send approved Reddit missions
+### User asks why the queue is quiet
+```
+1. signalpipe_list_stations → read each feed's verdict
+2. "Posts are arriving but none matched" → signalpipe_update_product (better anchors)
+3. "No posts captured" → check the URL, or signalpipe_update_station (new rss_url)
+4. A feed that only ever produces noise → signalpipe_preview_station on alternatives,
+   then signalpipe_update_station (active=false) or signalpipe_remove_station
+```
+
+### User wants the plugin to post approved Reddit missions
 ```
 1. (one-time) Set REDDIT_CLIENT_ID/SECRET/USERNAME/PASSWORD in the environment
 2. signalpipe_start_sender (dry_run=true) → confirm it connects and missions arrive
@@ -405,20 +514,24 @@ Report the sender state.
 5. signalpipe_sender_status → watch sent / failed / skipped counts
 ```
 
+### User wants their feeds read from this machine
+```
+1. signalpipe_read_feeds → one pass; shows which feeds are marked for this machine
+2. signalpipe_read_feeds (every_minutes=30) → keep reading in the background
+3. signalpipe_get_missions → review what the judges surfaced
+```
+
 ---
 
 ## Backend Lifecycle
 
-When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 20 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
+When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 29 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
-🦐 SignalPipe ONLINE
-   Backend : https://api.signalpipe.io
-   Tools   : 20 registered (Mantidae + Nurture Engine + Sender)
-   Status  : connected
+[SignalPipe] Plugin v2.1.0 loaded — 29 tools registered (acquisition + companion + sender + reader)
 ```
 
-The backend polls every 60 seconds automatically. It scores signals, drafts replies, and queues approved missions for outreach execution — all on managed infrastructure. Your OpenClaw LLM key stays inside OpenClaw and is never shared with SignalPipe.
+The brain scouts your active products every 30 minutes. It scores signals, drafts replies, and queues approved missions for outreach execution — all on managed infrastructure. Your OpenClaw LLM key stays inside OpenClaw and is never shared with SignalPipe.
 
 ---
 

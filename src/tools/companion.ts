@@ -1,5 +1,5 @@
 import { Type } from '@sinclair/typebox'
-import { api } from '../api/client'
+import { api, PANEL_TIMEOUT_MS } from '../api/client'
 
 type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean }
 
@@ -22,7 +22,9 @@ export function registerCompanionTools(openClaw: any): void {
     description:
       'Log a signal from a prospect and update their temperature. ' +
       'Creates the prospect automatically if they are new. ' +
-      'Call this whenever a prospect takes any action: replies, asks pricing, ghosts, books a demo, etc. ' +
+      'Call this whenever a prospect takes any action: asks pricing, ghosts, books a demo, etc. ' +
+      'When you have the text of their reply, use signalpipe_record_reply instead: it reads the ' +
+      'reply and updates temperature, mode, objections and do-not-contact for you. ' +
       'Returns their new temperature, mode, and recommended follow-up timing.',
     parameters: Type.Object({
       handle: Type.String({ description: 'Prospect identifier — Twitter handle, Reddit username, email, etc.' }),
@@ -31,13 +33,39 @@ export function registerCompanionTools(openClaw: any): void {
         description:
           'What the prospect did: booked_demo | asked_pricing | viewed_content | clicked_link | replied | ' +
           'not_interested | too_expensive | no_time | competitor | not_decision_maker | ' +
-          'bad_timing | ghosted_3_days | ghosted_7_days',
+          'bad_timing | ghosted_3_days | ghosted_7_days | opted_out (they asked not to be ' +
+          'contacted: ends the relationship, no further messages)',
       }),
       product_id: Type.Optional(Type.String({ description: 'Product ID this prospect is interested in' })),
       mission_id: Type.Optional(Type.String({ description: 'Mantidae mission ID that initiated this relationship' })),
     }),
     async execute(_id: string, params: Record<string, unknown>) {
       try { return ok(await api.post('/companion/track', params)) } catch (e) { return err(e) }
+    },
+  })
+
+  openClaw.registerTool({
+    name: 'signalpipe_record_reply',
+    description:
+      'Record what a prospect wrote back, and let the brain read it. Call this whenever a ' +
+      'tracked prospect replies (a comment reply, a DM, an email). The brain reads the reply ' +
+      'and updates their temperature, mode and objections. Returns: intent (buy, interested, ' +
+      'objection, not_now, unsubscribe, neutral...), the new mode (nurture / sales / closing / ' +
+      'recovery / dead), do_not_contact (true when they asked not to be contacted: stop, never ' +
+      'message them again), and invites_private_contact (true only when THIS reply explicitly ' +
+      'asks to continue in private, e.g. "DM me". Reddit and X require that consent before an ' +
+      'app sends a private message, so never suggest a DM without it). ' +
+      'Presentation: one line with the intent, the new mode and any new objection. If ' +
+      'do_not_contact is true, say so plainly.',
+    parameters: Type.Object({
+      prospect_id: Type.String({ description: 'Prospect ID (from signalpipe_track_prospect or signalpipe_get_pipeline)' }),
+      reply_text:  Type.String({ description: 'The reply exactly as the prospect wrote it' }),
+      channel:     Type.Optional(Type.String({ description: 'Where it arrived: reddit | twitter | email | discord | ...' })),
+    }),
+    async execute(_id: string, params: { prospect_id: string; reply_text: string; channel?: string }) {
+      try {
+        return ok(await api.post('/companion/record_reply', params, { timeoutMs: PANEL_TIMEOUT_MS }))
+      } catch (e) { return err(e) }
     },
   })
 
@@ -115,6 +143,11 @@ export function registerCompanionTools(openClaw: any): void {
       'match info, and — when score >= 40 and not sarcastic — a ' +
       'drafting_context block you can use to draft a reply client-side ' +
       'without uploading anything. ' +
+      'panel_verdict says what the three judges concluded: "kept", "rejected" or "not_run". ' +
+      'The judges can raise a score but never lower it, so treat panel_verdict "rejected" as ' +
+      'not a lead whatever the score. ' +
+      'Scoring a reply or comment? Pass the post or thread it answers as context: a short ' +
+      'reply like "same problem here, what did you end up using?" means little alone. ' +
       'When to use this vs signalpipe_track_prospect: ' +
       'score_signal = does this TEXT contain a buying signal? (pure ' +
       'classification, no state change). ' +
@@ -143,9 +176,16 @@ export function registerCompanionTools(openClaw: any): void {
           '"whatsapp" | "twitter" | "reddit" | etc. Affects drafting_context ' +
           'tone, not the score. Omit if not relevant.',
       })),
+      context: Type.Optional(Type.String({
+        description:
+          'The post, thread or email the text replies to (up to 2,000 chars). Shown to the ' +
+          'judges as background; the score is still about the text\'s own author.',
+      })),
     }),
-    async execute(_id: string, params: { text: string; product_id: string; source_hint?: string }) {
-      try { return ok(await api.post('/signal/score', params)) } catch (e) { return err(e) }
+    async execute(_id: string, params: { text: string; product_id: string; source_hint?: string; context?: string }) {
+      try {
+        return ok(await api.post('/signal/score', params, { timeoutMs: PANEL_TIMEOUT_MS }))
+      } catch (e) { return err(e) }
     },
   })
 
@@ -154,8 +194,9 @@ export function registerCompanionTools(openClaw: any): void {
     description:
       'List the prospect pipeline sorted hottest-first. Each prospect ' +
       'includes id, handle, channel, temperature (0–100), mode ' +
-      '(sales/closing/recovery), last_signal, last_contact, and any ' +
-      'recorded objections. Includes summary counts per mode. ' +
+      '(nurture/sales/closing/recovery, or dead = asked not to be contacted: never message ' +
+      'them), last_signal, last_contact, and any recorded objections. Includes summary ' +
+      'counts per mode, with do_not_contact for dead. ' +
       'Presentation: lead with the summary counts, then list the top ' +
       'prospects as a numbered list with handle, temperature, mode, and ' +
       'last signal. Do NOT introspect this response with shell commands ' +

@@ -1,10 +1,18 @@
 import { API_URL, authHeaders } from '../config'
 
-const API_TIMEOUT_MS = 10_000  // 10 seconds for backend calls
+const API_TIMEOUT_MS = 10_000  // 10 seconds for ordinary backend calls
 
-async function request(method: string, path: string, body?: object): Promise<unknown> {
+// Calls that wait on the brain's three judges need longer: one panel is three
+// model calls (with retries), and a feed preview runs up to twelve panels in a
+// row. A 10-second abort used to cut those off mid-judgement.
+export const PANEL_TIMEOUT_MS = 60_000
+export const PREVIEW_TIMEOUT_MS = 240_000
+
+export interface RequestOptions { timeoutMs?: number }
+
+async function request(method: string, path: string, body?: object, opts: RequestOptions = {}): Promise<unknown> {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? API_TIMEOUT_MS)
 
   try {
     const res = await fetch(`${API_URL}${path}`, {
@@ -31,7 +39,7 @@ async function request(method: string, path: string, body?: object): Promise<unk
 }
 
 export const api = {
-  get:    (path: string)                  => request('GET',    path),
-  post:   (path: string, body?: object)   => request('POST',   path, body),
-  delete: (path: string)                  => request('DELETE', path),
+  get:    (path: string, opts?: RequestOptions)                => request('GET',    path, undefined, opts),
+  post:   (path: string, body?: object, opts?: RequestOptions) => request('POST',   path, body, opts),
+  delete: (path: string, opts?: RequestOptions)                => request('DELETE', path, undefined, opts),
 }
