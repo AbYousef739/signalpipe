@@ -2,7 +2,7 @@
 
 **Agentic sales pipeline — buying-intent detection, swarm-scored lead qualification, and prospect nurturing for OpenClaw agents.**
 
-SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configure for people publicly expressing buying intent. A 3-judge AI swarm evaluates every signal, calibrates the reply to the signal strength, and surfaces only real leads for your approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude Code, Cursor, or Windsurf.
+SignalPipe judges whether the author of a post, email or ticket wants to buy. Your agent brings the text from anywhere it reads, including X through your own X API access, and an optional scout reads the RSS or Atom feeds you choose. Three independent judges rule on every borderline signal, the reply is calibrated to how strong the signal was, and only real leads reach you for approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude Code, Cursor, or Windsurf.
 
 [signalpipe.io](https://signalpipe.io)
 
@@ -11,7 +11,7 @@ SignalPipe watches Reddit, Hacker News, X/Twitter, and any RSS feed you configur
 ## What It Does
 
 **Top of funnel — Signal Acquisition (Mantidae):**
-Scouts Reddit, Hacker News, X/Twitter, and custom RSS feeds every cycle. Every post passes through a 3-stage scoring filter — keyword gate, multi-factor semantic scoring, sarcasm detection — then reaches a 3-judge AI drafting swarm: Skeptic, Analyst, Optimist. Each judge scores the lead independently. The swarm fuses their scores and suppresses low-intent posts automatically. Only leads that clear the swarm reach your queue — with a draft already calibrated to how hot the signal is:
+Your agent brings text from anywhere it reads, and the optional scout reads the RSS or Atom feeds you choose every cycle. Clear-cut posts are decided on content alone; borderline ones go to three independent judges (Skeptic, Analyst, Optimist), and when they split you see it. Only real leads reach your queue, with a draft already calibrated to how strong the signal is:
 
 - **Closer (highest-intent):** Direct, action-oriented reply — proposes a concrete next step
 - **Advisor (mid-intent):** Consultative — acknowledges the problem, introduces the product naturally
@@ -23,7 +23,7 @@ Competitor-switch posts are hard-floored and always reach your queue regardless 
 Tracks every prospect's temperature (0–100) across 13 signal types. Automatically selects the right persona (Educator → Consultant → Closer → Re-engager). Remembers objections permanently — if someone said the price is too high, that angle is never repeated. Never spams. One-directional mode transitions.
 
 **Execution — Sender (v2.0):**
-The brain scores, drafts, and approves; the plugin can now also **send**. An optional background sender holds a live stream open to the brain, receives the missions you've already approved, and posts `reddit_comment` / `reddit_dm` on Reddit with **your own** credentials. *The math runs on us, the sending runs on you* — your Reddit credentials and LLM keys never reach SignalPipe. `twitter_reply` is handled by the standalone [`signalpipe-daemon`](https://github.com/AbYousef739/signalpipe-daemon). The sender is opt-in: set the `REDDIT_*` env vars to enable it, or ignore it entirely and stay MCP-only.
+The brain scores, drafts, and approves; the plugin can now also **send**. An optional background sender holds a live stream open to the brain, receives the missions you've already approved, and posts `reddit_comment` / `reddit_dm` on Reddit with **your own** credentials. *The math runs on us, the sending runs on you* — your Reddit credentials and LLM keys never reach SignalPipe. `twitter_reply` is handled by the standalone [`signalpipe-daemon`](https://github.com/AbYousef739/signalpipe-daemon). The sender is opt-in: set the `REDDIT_*` env vars to enable it, or ignore it entirely and stay MCP-only. Private messages go only to someone who asked for one: Reddit and X both require the recipient's consent before an app sends one. SignalPipe never auto-sends a DM or an X reply; each waits for your approval.
 
 ---
 
@@ -204,7 +204,9 @@ Subscribe at [signalpipe.io](https://signalpipe.io/#pricing), sign in to the [co
 
 **Via OpenClaw:**
 ```bash
-claw install signalpipe
+openclaw plugins install signalpipe
+# or from ClawHub:
+openclaw plugins install clawhub:signalpipe
 ```
 
 **Via MCP (no plugin install):** Add the MCP server URL to Claude.ai, Cursor, or Windsurf — see [MCP Support](#mcp-support) above.
@@ -216,7 +218,7 @@ export SIGNALPIPE_API_URL=https://api.signalpipe.io
 export SIGNALPIPE_OPERATOR_KEY=your-operator-key
 ```
 
-**Optional — to run the in-plugin Reddit sender (v2.0):** add a Reddit "script" app's credentials (create one at https://www.reddit.com/prefs/apps on the sending account). These stay on your machine and are never sent to SignalPipe.
+**Optional — to run the in-plugin Reddit sender (v2.0):** add a Reddit "script" app's credentials (create one at https://www.reddit.com/prefs/apps on the sending account; since November 2025 Reddit reviews new API apps under its Responsible Builder Policy before issuing them). These stay on your machine and are never sent to SignalPipe.
 
 ```bash
 export REDDIT_CLIENT_ID=your-client-id

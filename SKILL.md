@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.0.4
+version: 2.0.5
 metadata:
   openclaw:
     requires:
@@ -20,7 +20,7 @@ SignalPipe gives you a full agentic sales pipeline:
 
 Three subsystems, twenty tools. Use them in sequence.
 
-> **v2.0.4 — docs match the live product.** Scouts run every 30 minutes (this said 10). `signalpipe_scout_now` now scans only the operator's own products, at most once per 15 minutes; a `skipped` status with reason `cooldown` or `batch_in_progress` is normal (backend change, 2026-09-24). README pricing is the live $29 Starter / $79 Growth, metered in judgements, with no waitlist. The sender needs a Reddit script app, which Reddit has issued only after manual approval since November 2025; without one, post approved drafts by hand. No tool surface change.
+> **v2.0.5 — README matches the code.** SignalPipe does not read X: your agent brings X posts through your own X API access, and the optional scout reads the RSS or Atom feeds you choose. Install with `openclaw plugins install signalpipe` (or `clawhub:signalpipe`). Private messages go only to someone who asked for one, and the backend never auto-sends an X reply or a DM, whatever your auto-send setting (backend change, 2026-09-25). No tool surface change.
 
 > **v2.0.3 — score_signal is documented, and the listing says what this is.** The `Returns` block for `signalpipe_score_signal` never mentioned `swarm`, `swarm_ran` or `source_hint`; the three-judge verdict is the thing that makes the score worth trusting and the contract was silent on it. Now documented as each judge's stance plus a `split` flag — a split panel is the case worth a human glance. The panel's internal numerics are not returned and are not documented as though they were. The npm/ClawHub blurb also stopped describing a Reddit scraper: `score_signal` takes text from any channel the host agent can read, and the listing now leads with that. No tool surface or behaviour change.
 

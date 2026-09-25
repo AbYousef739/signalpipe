@@ -3,13 +3,20 @@ import { registerCompanionTools } from './tools/companion'
 import { registerSenderTools } from './tools/sender'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.0.4
+ * SignalPipe — OpenClaw Plugin v2.0.5
  *
  * Registers 20 tools across three subsystems:
  *   Acquisition tools   — top-of-funnel: signal detection → mission review → drafting
  *   Companion tools     — mid/bottom-of-funnel: prospect nurturing → pipeline → messaging
  *   Sender tools        — the v4 "send" half: stream approved missions and post
  *                         them on Reddit with the operator's OWN credentials
+ *
+ * v2.0.5 — README corrections (2026-09-25). The README said SignalPipe scouts
+ *   X/Twitter; it never has (X has no feed to read, so the agent brings X posts
+ *   through the operator's own X API access). `claw install` replaced with the
+ *   real `openclaw plugins install signalpipe`; the scoring-pipeline internals
+ *   line removed; the consent rule for private messages documented. The backend
+ *   now never auto-sends an X reply or a DM (same date). No tool surface change.
  *
  * v2.0.4 — post-launch audit (2026-09-24). README pricing/waitlist replaced
  *   with the live plans ($29 Starter / $79 Growth, metered in judgements);
@@ -108,7 +115,7 @@ export function register(api: any): void {
   registerCompanionTools(api)
   registerSenderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.0.4 loaded — 20 tools registered (acquisition + companion + sender)')
+  console.log('[SignalPipe] Plugin v2.0.5 loaded — 20 tools registered (acquisition + companion + sender)')
 }
 
 export default register
