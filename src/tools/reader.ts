@@ -26,10 +26,11 @@ export function registerReaderTools(openClaw: any): void {
       'Read the stations your SignalPipe brain marks for this machine ' +
       '(read_by: "client" in /stations/list) and send each feed page to the ' +
       'brain for judging. The feeds are fetched from this machine, at most 50 ' +
-      'posts per feed with a pause between feeds; the brain then scores the ' +
-      'posts exactly as if its own scout had read them, and any missions reach ' +
-      'your queue as usual. With no parameters it runs one pass now and returns ' +
-      'the counts. Pass every_minutes (10 or more) to keep reading in the ' +
+      'posts per feed and a minute between feeds (Reddit limits how fast one ' +
+      'machine may read); the brain then scores the posts exactly as if its own ' +
+      'scout had read them, and any missions reach your queue as usual. With no ' +
+      'parameters it starts one pass in the background and returns at once; call ' +
+      'it again for the last pass\'s counts. Pass every_minutes (10 or more) to keep reading in the ' +
       'background on that interval, or stop: true to end the background reader. ' +
       'Call it with no parameters first to see which feeds are marked for this ' +
       'machine. A feed the brain judged a few minutes ago is skipped (cooldown), ' +
@@ -47,7 +48,7 @@ export function registerReaderTools(openClaw: any): void {
       try {
         if (params.stop) return ok({ ...readerManager.stop(), ...readerManager.status() })
         if (params.every_minutes) return ok({ ...readerManager.start(params.every_minutes), ...readerManager.status() })
-        return ok(await readerManager.readOnce())
+        return ok({ ...readerManager.startPass(), ...readerManager.status() })
       } catch (e) { return err(e) }
     },
   })

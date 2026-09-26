@@ -4,7 +4,7 @@ import { registerSenderTools } from './tools/sender'
 import { registerReaderTools } from './tools/reader'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.1.0
+ * SignalPipe — OpenClaw Plugin v2.1.1
  *
  * Registers 29 tools across four subsystems:
  *   Acquisition tools   — top-of-funnel: product + station setup → signal
@@ -15,6 +15,13 @@ import { registerReaderTools } from './tools/reader'
  *                         them on Reddit with the operator's OWN credentials
  *   Reader tools        — client-side reading and feed preview: fetch feeds on
  *                         this machine and send the posts to the brain for judging
+ *
+ * v2.1.1 (2026-09-26). Reading keeps up with Reddit's limits. Feeds were read
+ *   five seconds apart and Reddit answered every one after the first with HTTP
+ *   429, so most client-side stations were never read. Now: a minute apart, one
+ *   retry after two minutes when throttled, a rate-limited count, HTTP errors
+ *   reported with their status, and a one-off signalpipe_read_feeds starts the
+ *   pass in the background instead of holding the tool call for minutes.
  *
  * v2.1.0 (2026-09-26). Client-side reading, plus everything the brain could do
  *   that no plugin tool reached, from the 2026-09-25 brain audit:
@@ -140,7 +147,7 @@ export function register(api: any): void {
   registerSenderTools(api)
   registerReaderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.1.0 loaded — 29 tools registered (acquisition + companion + sender + reader)')
+  console.log('[SignalPipe] Plugin v2.1.1 loaded — 29 tools registered (acquisition + companion + sender + reader)')
 }
 
 export default register

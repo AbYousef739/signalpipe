@@ -79,7 +79,7 @@ Reads feeds from this machine. No credentials and no extra dependencies.
 
 | Tool | What it does |
 |---|---|
-| `signalpipe_read_feeds` | Read the client-marked stations from this machine and send each feed page to the brain for judging. One pass by default; `every_minutes` keeps reading in the background, `stop` ends it. |
+| `signalpipe_read_feeds` | Read the client-marked stations from this machine and send each feed page to the brain for judging. One pass in the background by default (a minute per feed); `every_minutes` keeps reading on an interval, `stop` ends it. |
 | `signalpipe_preview_station` | Check a feed for buyers before adding it: read here, judged by the brain, nothing saved. Answers VIABLE, MARGINAL, ON-TOPIC NOT IN-MARKET, NO BUYERS or NO DATA. |
 
 ---
@@ -322,7 +322,7 @@ Billed monthly through Stripe; cancel any time from your billing page. Every sco
 
 ## Reading your feeds on this machine
 
-Some stations can be read from your own machine instead of by the brain: they show `read_by: "client"` in `/stations/list`. `signalpipe_read_feeds` fetches those feeds from here, at most 50 posts per feed with a pause between feeds, and hands each page to the brain, which scores the posts as if its own scout had read them. Run it once, or with `every_minutes` to keep reading. The standalone [signalpipe-daemon](https://github.com/AbYousef739/signalpipe-daemon) does the same with `signalpipe-daemon read`.
+Some stations can be read from your own machine instead of by the brain: they show `read_by: "client"` in `/stations/list`. `signalpipe_read_feeds` fetches those feeds from here, at most 50 posts per feed and a minute between feeds (Reddit limits how fast one machine may read), and hands each page to the brain, which scores the posts as if its own scout had read them. Run it once, or with `every_minutes` to keep reading. The standalone [signalpipe-daemon](https://github.com/AbYousef739/signalpipe-daemon) does the same with `signalpipe-daemon read`.
 
 ## Checking a feed before you add it
 

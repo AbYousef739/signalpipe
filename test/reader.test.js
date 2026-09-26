@@ -8,7 +8,7 @@ process.env.SIGNALPIPE_OPERATOR_KEY = process.env.SIGNALPIPE_OPERATOR_KEY || 'te
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const { parseFeed, decodeEntities } = require('../dist/reader/feed')
-const { readOnce, clientStations, ReaderManager, FEED_DELAY_MS } = require('../dist/reader/manager')
+const { readOnce, clientStations, ReaderManager, FEED_DELAY_MS, RATE_LIMIT_RETRY_MS, FeedHttpError } = require('../dist/reader/manager')
 
 // Shaped like a Reddit /new/.rss (Atom) feed: HTML content entity-encoded,
 // author as /u/name, link as an href attribute.
@@ -138,7 +138,7 @@ test('readOnce fetches the client feeds from here and sends each page', async ()
   assert.deepEqual(calls.slept, [FEED_DELAY_MS])
   assert.deepEqual(calls.ingested.map(([id]) => id), ['s1', 's3'])
   assert.equal(calls.ingested[0][1][0].author, '/u/buyer_one')
-  assert.deepEqual(counts, { stations: 2, sent: 2, entries: 3, empty: 0, skipped: 0, errors: 0 })
+  assert.deepEqual(counts, { stations: 2, sent: 2, entries: 3, empty: 0, skipped: 0, rate_limited: 0, errors: 0 })
 })
 
 test('readOnce counts cooldowns, empty feeds and errors, and carries on', async () => {
@@ -154,6 +154,57 @@ test('readOnce counts cooldowns, empty feeds and errors, and carries on', async 
   const c2 = await readOnce(cooled.deps)
   assert.equal(c2.skipped, 2)
   assert.ok(cooled.calls.logs.some((m) => m.includes('cooldown') && m.includes('90s')))
+})
+
+test('feeds are read a minute apart', () => {
+  assert.equal(FEED_DELAY_MS, 60_000)
+})
+
+test('a throttled feed is retried once after a longer wait', async () => {
+  const replies = { reddit: [new FeedHttpError(429), REDDIT_ATOM] }
+  const { deps, calls } = fakeDeps({
+    fetchText: async (url) => {
+      if (!url.includes('reddit')) return HN_RSS
+      const next = replies.reddit.shift()
+      if (next instanceof Error) throw next
+      return next
+    },
+  })
+  const counts = await readOnce(deps)
+  assert.deepEqual(calls.slept, [RATE_LIMIT_RETRY_MS, FEED_DELAY_MS])
+  assert.equal(counts.sent, 2)
+  assert.equal(counts.rate_limited, 0)
+  assert.ok(calls.logs.some((m) => m.includes('HTTP 429')))
+})
+
+test('a feed still throttled is counted and left for the next pass', async () => {
+  const { deps, calls } = fakeDeps({ fetchText: async () => { throw new FeedHttpError(429) } })
+  const counts = await readOnce(deps)
+  assert.equal(counts.rate_limited, 2)
+  assert.equal(counts.errors, 0)
+  assert.deepEqual(calls.ingested, [])
+  assert.ok(calls.logs.some((m) => m.includes('next pass')))
+})
+
+test('an HTTP error is reported with its status', async () => {
+  const { deps, calls } = fakeDeps({ fetchText: async () => { throw new FeedHttpError(404) } })
+  const counts = await readOnce(deps)
+  assert.equal(counts.errors, 2)
+  assert.ok(calls.logs.some((m) => m.includes('HTTP 404')))
+})
+
+test('a one-off pass starts in the background and answers at once', async () => {
+  let release
+  const gate = new Promise((resolve) => { release = resolve })
+  const { deps } = fakeDeps({ listStations: async () => { await gate; return STATIONS } })
+  const m = new ReaderManager(deps)
+  assert.equal(m.startPass().status, 'started')
+  assert.equal(m.status().reading_now, true)
+  assert.equal(m.startPass().status, 'busy')
+  release()
+  while (m.status().reading_now) await new Promise((r) => setImmediate(r))
+  assert.equal(m.status().last_counts.sent, 2)
+  assert.equal(m.status().pass_started_at, null)
 })
 
 test('nothing marked for this machine means nothing is fetched', async () => {

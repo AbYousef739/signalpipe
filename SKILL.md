@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.1.0
+version: 2.1.1
 metadata:
   openclaw:
     requires:
@@ -19,6 +19,8 @@ SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility → sending.**
 
 Four subsystems, twenty-nine tools. Use them in sequence.
+
+> **v2.1.1 — reading keeps up with Reddit's limits.** Feeds are read a minute apart (five seconds apart, Reddit answered every feed after the first with HTTP 429), a throttled feed is retried once, and a one-off `signalpipe_read_feeds` starts the pass in the background and returns at once.
 
 > **v2.1.0 — client-side reading, feed preview, replies, and set-up tools.** New tool `signalpipe_read_feeds` reads the stations your brain marks `read_by: "client"` from this machine and sends each feed page to the brain for judging; the brain scores the posts exactly as if its own scout had read them. No credentials and no new dependencies (the RSS/Atom parsing is built in). `signalpipe_preview_station` checks a feed for buyers before it is added. `signalpipe_record_reply` hands a prospect's reply to the brain, which reads it (intent, objections, do-not-contact, and whether they invited a private message). `signalpipe_suggest_anchors`, `signalpipe_mark_sent`, `signalpipe_list_stations`, `signalpipe_update_product`, `signalpipe_update_station` and `signalpipe_remove_station` cover set-up and upkeep. `signalpipe_score_signal` takes `context` and returns `panel_verdict`.
 
@@ -438,13 +440,13 @@ Some stations can be read from the operator's own machine instead of by the brai
 ### Tool: `signalpipe_read_feeds`
 Read the stations marked for this machine and send the posts to the brain for judging.
 
-**When to call:** The user asks to read their feeds now, or `/stations/list` shows stations with `read_by: "client"`. Call it with no parameters first: the result shows how many feeds are marked for this machine.
+**When to call:** The user asks to read their feeds now, or `/stations/list` shows stations with `read_by: "client"`. Call it with no parameters: it starts one pass in the background (about a minute per feed, because Reddit limits how fast one machine may read) and returns at once; call it again a few minutes later for the counts.
 
 **Parameters:**
 - `every_minutes` (optional, integer, 10 or more): keep reading in the background on this interval. The brain's own scout runs every 30 minutes.
 - `stop` (optional, boolean): stop the background reader.
 
-**Returns:** With no parameters, the counts for one pass: client stations, feeds sent, posts sent, empty feeds, skipped and errors. A feed the brain judged a few minutes ago is skipped on cooldown, which is normal. With `every_minutes` or `stop`, the reader's state (running, interval, passes, last counts, last error).
+**Returns:** The reader's state: `status` (`started`, or `busy` while a pass runs), `reading_now`, `running` (background reading on), interval, passes, and `last_counts` for the last finished pass (client stations, feeds sent, posts sent, empty feeds, skipped, rate-limited, errors). A feed the brain judged a few minutes ago is skipped on cooldown, and a feed Reddit is throttling is retried once and otherwise read on the next pass; both are normal.
 
 **After calling:** Missions from these posts reach the queue like any other; offer `signalpipe_get_missions`.
 
@@ -516,7 +518,7 @@ Check a feed for buyers before adding it as a station.
 
 ### User wants their feeds read from this machine
 ```
-1. signalpipe_read_feeds → one pass; shows which feeds are marked for this machine
+1. signalpipe_read_feeds → starts one pass in the background; call again for the counts
 2. signalpipe_read_feeds (every_minutes=30) → keep reading in the background
 3. signalpipe_get_missions → review what the judges surfaced
 ```
@@ -528,7 +530,7 @@ Check a feed for buyers before adding it as a station.
 When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 29 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
-[SignalPipe] Plugin v2.1.0 loaded — 29 tools registered (acquisition + companion + sender + reader)
+[SignalPipe] Plugin v2.1.1 loaded — 29 tools registered (acquisition + companion + sender + reader)
 ```
 
 The brain scouts your active products every 30 minutes. It scores signals, drafts replies, and queues approved missions for outreach execution — all on managed infrastructure. Your OpenClaw LLM key stays inside OpenClaw and is never shared with SignalPipe.
