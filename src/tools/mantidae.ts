@@ -306,7 +306,7 @@ export function registerAcquisitionTools(openClaw: any): void {
     parameters: Type.Object({
       name:            Type.String({ description: 'Product name' }),
       value_prop:      Type.String({ description: 'What it does for the buyer' }),
-      target_audience: Type.Optional(Type.String({ description: 'Who buys it' })),
+      target_audience: Type.Optional(Type.String({ description: 'Who buys it: one specific buyer, not a list of audiences' })),
       description:     Type.Optional(Type.String({ description: 'One-sentence product description' })),
       count:           Type.Optional(Type.Integer({ minimum: 3, maximum: 15, description: 'How many anchors (default 8)' })),
     }),
@@ -327,12 +327,16 @@ export function registerAcquisitionTools(openClaw: any): void {
       'and a post matching none of the keywords is dropped before anything reads it, so a keyword ' +
       'list silently deletes buyers who phrase things differently. ' +
       'competitor_keywords: direct substitutes only. ' +
+      'Describe ONE buyer narrowly in target_audience and value_prop: who they are and the problem ' +
+      'they would write about. The judges read both fields, and a broad audience (a list of groups, ' +
+      '"any operator") makes them keep weak leads. If the product has clearly different buyers, add ' +
+      'each as its own product. ' +
       'After adding, call signalpipe_reload_products to activate immediately.',
     parameters: Type.Object({
       name:                Type.String({ description: 'Product name' }),
       description:         Type.Optional(Type.String({ description: 'One-sentence product description' })),
-      target_audience:     Type.Optional(Type.String({ description: 'Who buys this product' })),
-      value_prop:          Type.Optional(Type.String({ description: 'Why buyers choose this over alternatives' })),
+      target_audience:     Type.Optional(Type.String({ description: 'One specific buyer, not a list of audiences (e.g. "founders of B2B SaaS doing their own outbound")' })),
+      value_prop:          Type.Optional(Type.String({ description: 'What it does for that buyer, and why they would choose it over alternatives' })),
       anchor_sentences:    Type.Array(Type.String(), { description: '5–10 buying-intent phrases written as the buyer (3 minimum, 5-40 words each)' }),
       competitor_keywords: Type.Optional(Type.Array(Type.String(), { description: 'Direct substitutes a buyer would pick instead' })),
       buy_signal_keywords: Type.Optional(Type.Array(Type.String(), { description: 'Leave empty unless there is a specific reason (see description)' })),

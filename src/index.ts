@@ -4,7 +4,7 @@ import { registerSenderTools } from './tools/sender'
 import { registerReaderTools } from './tools/reader'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.1.1
+ * SignalPipe — OpenClaw Plugin v2.1.2
  *
  * Registers 29 tools across four subsystems:
  *   Acquisition tools   — top-of-funnel: product + station setup → signal
@@ -15,6 +15,12 @@ import { registerReaderTools } from './tools/reader'
  *                         them on Reddit with the operator's OWN credentials
  *   Reader tools        — client-side reading and feed preview: fetch feeds on
  *                         this machine and send the posts to the brain for judging
+ *
+ * v2.1.2 (2026-09-28). Describe one buyer. signalpipe_add_product and
+ *   signalpipe_suggest_anchors ask for ONE buyer, described narrowly, in
+ *   target_audience and value_prop. The judges read both, and in the
+ *   2026-09-26 real-post eval a broad audience kept 26-41% noise where a
+ *   narrow one kept 8-18%.
  *
  * v2.1.1 (2026-09-26). Reading keeps up with Reddit's limits. Feeds were read
  *   five seconds apart and Reddit answered every one after the first with HTTP
@@ -147,7 +153,7 @@ export function register(api: any): void {
   registerSenderTools(api)
   registerReaderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.1.1 loaded — 29 tools registered (acquisition + companion + sender + reader)')
+  console.log('[SignalPipe] Plugin v2.1.2 loaded — 29 tools registered (acquisition + companion + sender + reader)')
 }
 
 export default register

@@ -1,7 +1,7 @@
 ---
 name: signalpipe
 description: Buying-intent scoring for AI agents — judges whether any text is a real buyer through a three-judge panel, whether it came from Reddit, HN, an RSS feed, or anything your agent already reads (email, Slack, Discord, tickets). Drafts replies, nurtures prospects from cold to closed, and (v2.0) sends approved Reddit replies and DMs with your own credentials.
-version: 2.1.1
+version: 2.1.2
 metadata:
   openclaw:
     requires:
@@ -19,6 +19,8 @@ SignalPipe gives you a full agentic sales pipeline:
 **signal detection → human review → prospect nurturing → pipeline visibility → sending.**
 
 Four subsystems, twenty-nine tools. Use them in sequence.
+
+> **v2.1.2 — describe one buyer.** `signalpipe_add_product` and `signalpipe_suggest_anchors` now ask for one buyer, described narrowly, in `target_audience` and `value_prop`. The judges read both fields, and a broad audience makes them keep weak leads.
 
 > **v2.1.1 — reading keeps up with Reddit's limits.** Feeds are read a minute apart (five seconds apart, Reddit answered every feed after the first with HTTP 429), a throttled feed is retried once, and a one-off `signalpipe_read_feeds` starts the pass in the background and returns at once.
 
@@ -184,6 +186,12 @@ Register a new product for lead monitoring.
   - ✅ "looking for an alternative to Y, the pricing has gotten absurd"
   - ✅ "anyone know a tool that does X? doing it by hand is killing me"
   - ❌ "enterprise-grade X automation platform" → matches sellers, not buyers
+- `target_audience` and `value_prop` — describe **one buyer, narrowly**: who
+  they are and the problem they would write about. The judges read both fields
+  when deciding whether a post's author is a buyer, so a broad audience ("SaaS
+  founders, agencies, sales teams… and any operator") makes them keep weak
+  leads. If the product has clearly different buyers, add each as its own
+  product.
 - `buy_signal_keywords` — **leave empty unless you have a specific reason.**
   This is an optional COST filter, not a quality one, and it's an AND-gate: a
   post that matches NONE of the keywords scores 0 *before* embedding and
@@ -530,7 +538,7 @@ Check a feed for buyers before adding it as a station.
 When SignalPipe loads (i.e., when OpenClaw starts with the plugin installed), the plugin registers its 29 tools and connects to the SignalPipe managed backend. You will see this in the OpenClaw logs:
 
 ```
-[SignalPipe] Plugin v2.1.1 loaded — 29 tools registered (acquisition + companion + sender + reader)
+[SignalPipe] Plugin v2.1.2 loaded — 29 tools registered (acquisition + companion + sender + reader)
 ```
 
 The brain scouts your active products every 30 minutes. It scores signals, drafts replies, and queues approved missions for outreach execution — all on managed infrastructure. Your OpenClaw LLM key stays inside OpenClaw and is never shared with SignalPipe.
