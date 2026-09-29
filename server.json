@@ -1,13 +1,30 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AbYousef739/signalpipe",
+  "title": "SignalPipe",
   "description": "Buying-intent judgement for AI agents: a three-judge panel scores any text as buyer or not.",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "repository": {
     "url": "https://github.com/AbYousef739/signalpipe",
     "source": "github"
   },
   "websiteUrl": "https://signalpipe.io",
+  "icons": [
+    {
+      "src": "https://signalpipe.io/logo.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "400x400"
+      ]
+    },
+    {
+      "src": "https://signalpipe.io/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    }
+  ],
   "remotes": [
     {
       "type": "streamable-http",
