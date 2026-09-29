@@ -1,0 +1,1127 @@
+{
+  "identifier": "abyousef739-signalpipe",
+  "name": "SignalPipe",
+  "version": "2.1.3",
+  "description": "Buying-intent judgement for AI agents: three judges decide whether the author of any post or message is a real buyer, and draft a reply you approve.",
+  "author": "SignalPipe",
+  "authorUrl": "https://signalpipe.io",
+  "homepage": "https://signalpipe.io",
+  "icon": "https://signalpipe.io/logo.png",
+  "category": "business",
+  "tags": [
+    "buyer-intent",
+    "intent-scoring",
+    "buying-signals",
+    "lead-generation",
+    "lead-qualification",
+    "sales-pipeline",
+    "sales",
+    "human-in-the-loop",
+    "reddit",
+    "hacker-news",
+    "rss",
+    "churn-detection",
+    "openclaw"
+  ],
+  "cloudEndpoint": "https://api.signalpipe.io/mcp",
+  "tools": [
+    {
+      "name": "get_missions",
+      "description": "List pending lead missions awaiting review.\n\n    Each mission includes: id, score, channel, lead snippet, prospect handle,\n    role (closer/advisor/educator), and the drafted reply if any.\n\n    Presentation: format the response as a numbered list inline. For each\n    mission show score, role, handle, snippet, and draft. Do NOT run shell\n    commands or write files to inspect this response — the data is already\n    structured. Read each mission directly from the JSON.\n    ",
+      "inputSchema": {
+        "properties": {
+          "include_context": {
+            "default": false,
+            "description": "Leave false for listings. True adds every mission's full drafting context; for a single mission use draft_mission instead.",
+            "title": "Include Context",
+            "type": "boolean"
+          },
+          "sort_by": {
+            "default": "newest",
+            "description": "\"newest\" (the default) lists the most recent first; \"consensus\" lists first the missions the judges agreed on most.",
+            "title": "Sort By",
+            "type": "string"
+          }
+        },
+        "title": "get_missionsArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "List pending missions",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "draft_mission",
+      "description": "Get the drafting payload for a single mission so you can write the reply.\n\n    This is a working payload, not a display payload — it intentionally\n    contains the product positioning, lead text, scoring breakdown, and\n    response schema your draft must follow. Use it to write the draft;\n    do NOT dump the full payload back to the user.\n\n    Workflow:\n        1. Call this with the mission_id.\n        2. Compose a reply that fits the role/tone in `context.strategy`.\n        3. Call `upload_draft(mission_id, draft, reasoning)` with your draft.\n        4. If the lead is clearly not a buying signal, skip drafting and\n           call `reject_mission(mission_id, rejection_reason)` instead.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The mission's id, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission_id"
+        ],
+        "title": "draft_missionArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Draft a reply",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "upload_draft",
+      "description": "Upload a reply draft you wrote for a mission.\n\n    The mission moves to pending_approval and surfaces for the operator to\n    approve or edit. `reasoning` is optional, one-sentence justification for\n    the audit log.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The mission's id, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          },
+          "draft": {
+            "description": "The reply you wrote, exactly as it should be sent.",
+            "title": "Draft",
+            "type": "string"
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional one-sentence reason for the draft, kept in the audit log.",
+            "title": "Reasoning"
+          }
+        },
+        "required": [
+          "mission_id",
+          "draft"
+        ],
+        "title": "upload_draftArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Upload a written draft",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "approve_mission",
+      "description": "Approve a mission and queue it for outreach. Teaches the RL loop.\n\n    Approval is the operator's signal that this lead is worth pursuing.\n    Today (manual outreach phase) it doubles as the \"I have replied or am\n    about to\" confirmation — so approve also rewards the source feed,\n    treating the mission as a positive outcome (`replied`). When the\n    sidecar is wired for autonomous Reddit/Twitter sending, outcome\n    tracking will move to a separate feedback step and approval will only\n    mean \"queue for outreach\".\n\n    Pass `edited_draft` if the operator edited the wording — otherwise\n    the existing draft is used unchanged.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The mission's id, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          },
+          "edited_draft": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The operator's edited wording, if they changed the draft. Leave empty to keep the existing draft.",
+            "title": "Edited Draft"
+          }
+        },
+        "required": [
+          "mission_id"
+        ],
+        "title": "approve_missionArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Approve a mission",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "reject_mission",
+      "description": "Reject a mission — it was not a real buying signal.\n\n    Use this when you want the system to LEARN from the rejection. Each\n    reason maps to a different RL penalty applied to the source feed's\n    scoring weight, so the swarm gets smarter about that product's leads\n    over time.\n\n    When to use this vs `delete_mission`:\n        - `reject_mission`: the lead was a bad signal — feed it back so the\n          scoring weight adjusts. Always prefer this when you have any\n          opinion on why the lead was wrong.\n        - `delete_mission`: queue cleanup only (duplicates, stale leads,\n          things you don't want to teach the system about). NO learning.\n\n    DON'T use `reject_mission` when the post is gone (deleted by the\n    poster, 404'd, removed by mods, or stale beyond your reply window).\n    The lead wasn't bad — it just disappeared. Use `delete_mission`\n    instead, which leaves the source station's `rl_weight` untouched.\n    Reaching for `reject_mission(not_relevant)` here penalises a station\n    that did nothing wrong.\n\n    Valid `rejection_reason` values:\n        - `spam`             — bot/promoted/automated post (heaviest penalty)\n        - `not_relevant`     — wrong audience or topic\n        - `wrong_product`    — relevant signal but wrong product matched it\n        - `too_vague`        — signal too weak to act on\n        - `sarcasm`          — venting/ironic, not a real buyer\n        - `already_customer` — they already bought (no penalty)\n        - `no_reason`        — default if you don't have a strong opinion\n\n    Pick the most accurate reason — they apply different penalty sizes,\n    so accuracy directly improves how the system learns.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The mission's id, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          },
+          "rejection_reason": {
+            "default": "no_reason",
+            "description": "Why the lead was wrong: spam, not_relevant, wrong_product, too_vague, sarcasm, already_customer or no_reason (the default). The tool description says when to use each.",
+            "title": "Rejection Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission_id"
+        ],
+        "title": "reject_missionArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Reject a mission",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_mission",
+      "description": "Hard-delete a mission from the queue — silent cleanup only.\n\n    Use this only when you want to clear the row without teaching the system\n    anything: duplicates, accidental scrapes, leads the operator doesn't\n    want surfaced again but doesn't have an opinion on.\n\n    Canonical case: the post is gone by the time you get there — deleted\n    by the poster, 404'd, removed by mods, or stale beyond your reply\n    window. The lead wasn't wrong, the opportunity just evaporated.\n    `delete_mission` is the right tool because there's nothing to learn\n    from the station — its `rl_weight` stays untouched. Using\n    `reject_mission` here would unfairly penalise a station for an event\n    it didn't cause.\n\n    When to use this vs `reject_mission`:\n        - `delete_mission`: queue cleanup, no learning. The scoring weight\n          for the source feed is untouched. Canonical uses: post deleted,\n          duplicates, accidental scrapes.\n        - `reject_mission`: the lead was a bad signal and you want the\n          system to learn from it. Always prefer this when you have any\n          opinion on WHY the lead was wrong — the RL loop can only sharpen\n          if you give it the rejection reason.\n\n    Default: if a lead looks like noise but you can categorise WHY (spam,\n    not relevant, too vague, etc.), reach for `reject_mission` first.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The mission's id, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission_id"
+        ],
+        "title": "delete_missionArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Delete a mission",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "mark_sent",
+      "description": "Mark a mission as sent by hand — \"I already messaged this person myself.\"\n\n    Use this when YOU sent the outreach manually (via the Reddit/X UI, a\n    public comment, or a DM) instead of letting an autonomous sender do it.\n    Many leads are surfaced on the `manual` channel precisely so the operator\n    reviews and sends them personally — and first contact is often a public\n    reply rather than a DM. Without telling the system the send happened, the\n    mission sits unfinished, no prospect is created, and a later follow-up\n    draft has no record of what you already said.\n\n    What this does:\n        - marks the mission as sent,\n        - records the outreach so follow-up drafts know the conversation\n          history (creates/updates the prospect and starts its lifecycle),\n        - counts as a positive endorsement for the source feed (same learning\n          signal as `approve_mission`).\n\n    When to use this vs the others:\n        - `mark_sent`: you sent it yourself, by hand. Records the send +\n          starts the prospect. Use this the moment you've actually messaged\n          or replied to the person.\n        - `approve_mission`: queue it for an autonomous sender to deliver\n          (you are NOT sending it yourself right now).\n        - `reject_mission` / `delete_mission`: you are NOT reaching out.\n\n    Idempotent: if you already called `approve_mission` on this lead, calling\n    `mark_sent` afterwards will not double-count anything — it just records\n    the actual send.\n    ",
+      "inputSchema": {
+        "properties": {
+          "mission_id": {
+            "description": "The id of the mission you replied to yourself, from get_missions.",
+            "title": "Mission Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission_id"
+        ],
+        "title": "mark_sentArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Mark a mission sent",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "scout_now",
+      "description": "Trigger an on-demand scouting run across YOUR active products.\n\n    Scouts run automatically every 30 minutes. Use this when the operator wants\n    a fresh scan now. At most one on-demand scan per tenant every 15 minutes;\n    returns status \"skipped\" with a reason (cooldown / batch_in_progress) when\n    a scan is not started.\n    ",
+      "inputSchema": {
+        "properties": {},
+        "title": "scout_nowArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Run a scout cycle now",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "score_signal",
+      "description": "Score arbitrary text for buying-intent / competitor-mention / churn / noise.\n\n    Use this when your agent encounters content from any channel it has\n    access to — email, Slack, Discord, Telegram, LinkedIn, WhatsApp, a\n    YouTube comment, a blog post — and you want to know whether it's a\n    real signal worth acting on, before drafting a reply.\n\n    SignalPipe doesn't connect to the source channel. Your agent reads\n    the text (via whatever plugin gives it that access) and passes the\n    text here. We run the same scoring engine the scout uses on Reddit\n    and HN: keyword gate, multilingual semantic scoring (EN/ES/FR/DE/PT/FI),\n    3-judge swarm pattern, sarcasm detection, and competitor-intent\n    classification.\n\n    Returns: score (0-100), role (closer/advisor/educator), classification\n    (buying_intent / competitor_mention / borderline / noise), sub-scores\n    (urgency, specificity, keyword_density), competitor info if matched,\n    and a `drafting_context` block when the score is high enough to act\n    on.\n\n    When the borderline band triggers a panel review you also get\n    `swarm_ran: true` and a `swarm` block: each judge's stance\n    (\"convinced\" / \"on the fence\" / \"unconvinced\") and `split: true` when\n    they disagreed materially. A split panel is worth flagging to the\n    operator — it usually means the post is genuinely ambiguous rather\n    than clearly a lead or clearly noise. You write the reply yourself using the context — same pattern as\n    `draft_mission`, no server-side LLM call required.\n\n    ⚠️ CHECK `degraded` BEFORE YOU TRUST A LOW SCORE. There is a per-tenant\n    daily budget for panel reviews. `degraded: true` means this text WAS\n    borderline but the panel did not get to judge it — either the budget ran\n    out (`swarm_skipped: \"daily_cap_reached\"`) or the panel errored\n    (`\"panel_failed\"`). The score you are holding is the content-only score,\n    which is exactly the score the panel exists to correct: it under-reads\n    real buyers as `noise`. Do NOT tell the operator a `degraded` post is not\n    a lead. Say the verdict is provisional and offer to re-score it later.\n\n    `degraded: false` with `swarm_skipped: \"not_borderline\"` is the normal,\n    healthy case — the text was clear-cut and did not need a panel. That\n    verdict is trustworthy.\n\n    `swarm_budget_remaining` tells you how many panel reviews are left today.\n    If you are scoring in bulk, watch it and pace yourself rather than\n    spending the budget on obvious noise.\n\n    `panel_verdict` says what the judges concluded: \"kept\", \"rejected\", or\n    \"not_run\". The judges can raise a score but never lower it, so a post they\n    rejected can still read \"borderline\". Treat `panel_verdict: \"rejected\"` as\n    not a lead, whatever the score.\n\n    Scoring a reply or comment? Pass the post or thread it answers as\n    `context`. The judges see it as background, and the score stays about the\n    reply's own author.\n\n    Presentation: if classification is `buying_intent` or\n    `competitor_mention`, surface the lead to the operator with score,\n    role, classification, and the drafting context. If classification is\n    `noise` or `borderline`, mention it briefly so the operator knows you\n    looked but don't bother them with a draft.\n    ",
+      "inputSchema": {
+        "properties": {
+          "text": {
+            "description": "The content to score: an email body, chat message, comment or post excerpt. Up to 4,000 characters are used.",
+            "title": "Text",
+            "type": "string"
+          },
+          "product_id": {
+            "description": "The product to score against, from get_products.",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "source_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional channel label, such as \"gmail\", \"slack\", \"discord\", \"telegram\", \"linkedin\", \"whatsapp\", \"facebook\" or \"youtube_comment\". It tunes the tone of the drafting context and never changes the score.",
+            "title": "Source Hint"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. The post, thread or email the text replies to (up to 2,000 characters). The judges see it as background; the score stays about the text's own author.",
+            "title": "Context"
+          }
+        },
+        "required": [
+          "text",
+          "product_id"
+        ],
+        "title": "score_signalArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Score arbitrary text",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_pipeline",
+      "description": "List the prospect pipeline sorted hottest-first.\n\n    Each prospect includes: id, handle, channel, temperature (0–100),\n    mode, last_signal, last_contact, and any recorded objections.\n\n    Modes (intent-based, not pure temperature):\n      - nurture  — first-touch / no engagement yet. Educator persona,\n                   value-first messaging. Default for newly tracked\n                   prospects, regardless of starting temperature.\n      - sales    — prospect has engaged (replied, clicked, asked).\n                   Consultant persona, qualify and build trust.\n      - closing  — temperature ≥ 75 from sustained engagement. Closer\n                   persona, push for the concrete next step.\n      - recovery — previously engaged and now cooled, OR explicit\n                   cooling signal (ghosted_*, not_interested, bad_timing).\n                   Re-engager persona, low-pressure re-open.\n      - dead     — asked not to be contacted (a reply that opted out, or the\n                   opted_out signal). Never message them again;\n                   get_message_prompt refuses. Counted as do_not_contact.\n\n    Presentation: lead with the summary counts, then list the top\n    prospects as a numbered list with handle, temperature, mode, and\n    last signal. Do NOT introspect this response with shell commands —\n    the data is already structured and ready to summarise inline.\n    ",
+      "inputSchema": {
+        "properties": {},
+        "title": "get_pipelineArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "View the prospect pipeline",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "track_prospect",
+      "description": "Log a signal from a prospect and update their temperature.\n\n    `signal` examples: booked_demo, asked_pricing, viewed_content, replied,\n    not_interested, too_expensive, no_time, competitor, ghosted_3_days,\n    ghosted_7_days, opted_out (they asked not to be contacted: ends the\n    relationship). Creates the prospect if new.\n\n    When you have the prospect's actual reply text, use `record_reply`\n    instead: it reads the reply and updates temperature, mode, objections and\n    do-not-contact for you.\n    ",
+      "inputSchema": {
+        "properties": {
+          "handle": {
+            "description": "The prospect's handle or address on that channel, such as a Reddit username or an email address.",
+            "title": "Handle",
+            "type": "string"
+          },
+          "channel": {
+            "description": "Where you talk to them, such as \"reddit\", \"twitter\" or \"email\". The handle and channel together identify the prospect.",
+            "title": "Channel",
+            "type": "string"
+          },
+          "signal": {
+            "description": "What happened: booked_demo, asked_pricing, viewed_content, clicked_link, replied, not_interested, too_expensive, no_time, competitor, not_decision_maker, bad_timing, ghosted_3_days, ghosted_7_days or opted_out.",
+            "title": "Signal",
+            "type": "string"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. The product they are a prospect for, from get_products.",
+            "title": "Product Id"
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. The mission they came from, from get_missions.",
+            "title": "Mission Id"
+          }
+        },
+        "required": [
+          "handle",
+          "channel",
+          "signal"
+        ],
+        "title": "track_prospectArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Log a prospect signal",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_message_prompt",
+      "description": "Get the drafting payload for the next outreach message to a prospect.\n\n    This is a working payload, not a display payload — it contains the\n    full system prompt, recent conversation history, persona voice, and\n    response schema. Use it to write the message; do NOT dump the prompt\n    or conversation history back to the user.\n\n    Workflow:\n        1. Call this with the prospect_id.\n        2. Compose a message that fits the persona and follows the schema.\n        3. Call `record_message(prospect_id, message, tactic, next_step)`.\n\n    Daily send cap is enforced — record_message will return a cap-hit\n    error if exceeded for the day.\n    ",
+      "inputSchema": {
+        "properties": {
+          "prospect_id": {
+            "description": "The prospect's id, from get_pipeline.",
+            "title": "Prospect Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prospect_id"
+        ],
+        "title": "get_message_promptArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Get drafting context",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "record_message",
+      "description": "Record a message you drafted as sent to the prospect.\n\n    Use after `get_message_prompt`. Daily send cap still applies.\n    ",
+      "inputSchema": {
+        "properties": {
+          "prospect_id": {
+            "description": "The prospect's id, from get_pipeline.",
+            "title": "Prospect Id",
+            "type": "string"
+          },
+          "message": {
+            "description": "The message you sent, word for word.",
+            "title": "Message",
+            "type": "string"
+          },
+          "tactic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional one-phrase label of the approach, as in the schema get_message_prompt returned.",
+            "title": "Tactic"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. What to do after this message, as in the same schema.",
+            "title": "Next Step"
+          }
+        },
+        "required": [
+          "prospect_id",
+          "message"
+        ],
+        "title": "record_messageArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Record a message",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_products",
+      "description": "List configured products being monitored for buying signals.\n\n    Each product includes: id, name, value_prop, target_audience, is_active,\n    created_at.\n\n    Presentation: list each product on its own line with name, status\n    (active/inactive), and a one-line value prop. Do NOT dump the raw\n    JSON — summarise inline.\n    ",
+      "inputSchema": {
+        "properties": {},
+        "title": "get_productsArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "List products",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "suggest_anchors",
+      "description": "Generate candidate anchor sentences for a product. CALL THIS BEFORE `add_product`.\n\n    Anchors are the single highest-leverage field in the whole system — they\n    are what every incoming post is compared against, so they decide what the\n    user does and doesn't get shown. Writing them well is hard and most people\n    write marketing copy by mistake, so use this and then let the user edit.\n\n    Recommended setup flow:\n      1. Ask the user three things: what the product is, who buys it, and what\n         it does for them.\n      2. Call this tool.\n      3. SHOW the returned anchors to the user and invite edits — they know\n         their buyers' words better than any model does.\n      4. Call `add_product` with the approved list, then `reload_products`.\n\n    A good anchor is the BUYER speaking about their PROBLEM, moments before\n    they'd want this product (\"my stream background is just a static image and\n    looks boring\", \"we're paying for seats nobody uses\"). A bad anchor is the\n    seller describing the product (\"premium audio-reactive visual engine\").\n    Product-voice anchors match other sellers; buyer-voice anchors match buyers.\n\n    Returns: {\"anchors\": [str, ...]}\n    ",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "description": "The product's name.",
+            "title": "Name",
+            "type": "string"
+          },
+          "value_prop": {
+            "description": "What the product does for its buyer, in a sentence.",
+            "title": "Value Prop",
+            "type": "string"
+          },
+          "target_audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. Who buys it: one buyer, described narrowly.",
+            "title": "Target Audience"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. A longer description of the product.",
+            "title": "Description"
+          },
+          "count": {
+            "default": 8,
+            "description": "How many anchors to suggest, 3 to 15 (default 8).",
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "value_prop"
+        ],
+        "title": "suggest_anchorsArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Suggest anchor sentences",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "add_product",
+      "description": "Register a new product to monitor for buying signals.\n\n    Call `suggest_anchors` FIRST and get the user's approval on the anchors —\n    do not invent them silently. Then `reload_products` to activate.\n\n    `anchor_sentences` (required, 3+, each 5-40 words) is the most important\n    field in the system: every incoming post is scored by similarity to these.\n    Write them as the BUYER describing their PROBLEM, not as the seller\n    describing the product:\n      GOOD  \"looking for an alternative to X, the pricing has gotten absurd\"\n      GOOD  \"anyone know a tool that does Y? doing it by hand is killing me\"\n      BAD   \"enterprise-grade Y automation platform\"   <- matches sellers, not buyers\n\n    `target_audience` and `value_prop` — describe ONE buyer, narrowly: who they\n    are and the problem they would write about. The judges read both fields when\n    deciding whether a post's author is a buyer, so a broad audience (a list of\n    groups, \"any operator\") makes them keep weak leads. If the product has\n    clearly different buyers, add each as its own product.\n\n    `buy_signal_keywords` — LEAVE THIS EMPTY unless you have a specific reason.\n    It is an optional COST filter, not a quality one, and it is an AND-gate: a\n    post matching NONE of the keywords scores 0 before embedding, before the\n    swarm, with nothing logged. For example, the same sentence scored 0 when it\n    said \"people\" and highly when it said \"leads\" — one word. Nobody can list\n    every phrasing a buyer might use, so a keyword list silently deletes real\n    buyers in proportion to how badly you guessed.\n    The embedding floor, vertical gate and 3-judge swarm still filter without it.\n\n    `competitor_keywords` — direct SUBSTITUTES only (tools a buyer would pick\n    INSTEAD of this product). A buyer-intent mention of one floors the score so\n    switchers always surface. Do not list adjacent-category tools that merely\n    sound similar; you will surface people who were never in your market.\n    ",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "description": "The product's name.",
+            "title": "Name",
+            "type": "string"
+          },
+          "anchor_sentences": {
+            "description": "3 or more sentences, each 5-40 words, written as the BUYER describing their problem. Get them from suggest_anchors and the user's approval.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Anchor Sentences",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. A longer description of the product.",
+            "title": "Description"
+          },
+          "target_audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. One buyer, described narrowly: who they are. The judges read it when deciding whether a post's author is a buyer.",
+            "title": "Target Audience"
+          },
+          "value_prop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. The problem the product solves for that buyer, in the words they would use. The judges read it too.",
+            "title": "Value Prop"
+          },
+          "competitor_keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. Direct substitutes only: tools a buyer would pick instead of this product.",
+            "title": "Competitor Keywords"
+          },
+          "buy_signal_keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional, best left empty: a post that matches none of these words is dropped before it is scored.",
+            "title": "Buy Signal Keywords"
+          }
+        },
+        "required": [
+          "name",
+          "anchor_sentences"
+        ],
+        "title": "add_productArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Add a product",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "add_station",
+      "description": "Add a feed for a product to monitor. Add 3-5; station CHOICE decides results.\n\n    Valid `platform`: `rss`, `hn`, `reddit`, `twitter_search` (the last only\n    routes outreach to X — it does NOT monitor X; X has no feed to read).\n\n    URL patterns:\n      Reddit:  https://www.reddit.com/r/SUBREDDIT/new/.rss    <- use /new/\n      HN:      https://hnrss.org/newest?q=KEYWORDS\n\n    Use `/new/.rss`, not the bare `/.rss`. Bare gives the HOT listing (popular,\n    already-answered posts); `/new/` gives fresh ones, and scoring rewards\n    recency heavily — the first helpful reply is the one that gets read.\n\n    CHOOSING STATIONS — this matters more than any setting:\n      * Prefer BROAD communities where buyers describe PROBLEMS, over narrow\n        keyword or tool-name searches. Broad community feeds consistently\n        produce the overwhelming majority of real leads; narrow keyword-search\n        feeds frequently produce none at all.\n      * Go where your buyer complains, not where your industry talks shop.\n        Vendor/founder communities are dense with people BUILDING things like\n        yours (correctly filtered out as sellers) and thin on buyers.\n      * 3-5 well-chosen feeds beat 20. Every feed costs a fetch each cycle and\n        sources rate-limit; more stations mainly buys you more noise.\n      * Ask the user where their customers actually hang out and complain. They\n        know; a guessed subreddit list is the most common cause of an empty queue.\n    ",
+      "inputSchema": {
+        "properties": {
+          "product_id": {
+            "description": "The product this feed is for, from get_products.",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "A short name for the feed, such as \"r/smallbusiness new\".",
+            "title": "Name",
+            "type": "string"
+          },
+          "platform": {
+            "description": "rss, hn, reddit or twitter_search. twitter_search only routes outreach to X; it does not read X.",
+            "title": "Platform",
+            "type": "string"
+          },
+          "rss_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The feed URL, needed for every platform except twitter_search. Reddit: https://www.reddit.com/r/SUBREDDIT/new/.rss, Hacker News: https://hnrss.org/newest?q=KEYWORDS.",
+            "title": "Rss Url"
+          },
+          "keyword": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional note stored with the station, such as the search term the feed is built on. It does not filter posts.",
+            "title": "Keyword"
+          }
+        },
+        "required": [
+          "product_id",
+          "name",
+          "platform"
+        ],
+        "title": "add_stationArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Add a station",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "reload_products",
+      "description": "Reload the product cache after adding or editing products.",
+      "inputSchema": {
+        "properties": {},
+        "title": "reload_productsArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Reload the product cache",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "record_reply",
+      "description": "Record what a prospect wrote back, and let the brain read it.\n\n    Call this whenever a tracked prospect replies (a comment reply, a DM, an\n    email). The brain reads the reply and updates their temperature, mode and\n    objections, and returns:\n      - intent: buy / interested / objection / not_now / unsubscribe / neutral ...\n      - mode: the prospect's new stage (nurture / sales / closing / recovery / dead)\n      - do_not_contact: true when they asked not to be contacted. Stop: never\n        message them again (get_message_prompt will refuse).\n      - invites_private_contact: true only when THIS reply explicitly asks to\n        continue in private (\"DM me\"). Reddit and X require that consent before\n        an app sends a private message, so never suggest a DM without it.\n\n    Presentation: tell the operator the intent, the new mode, and any new\n    objection in one line. If do_not_contact is true, say so plainly.\n    ",
+      "inputSchema": {
+        "properties": {
+          "prospect_id": {
+            "description": "The prospect's id, from get_pipeline.",
+            "title": "Prospect Id",
+            "type": "string"
+          },
+          "reply_text": {
+            "description": "What the prospect wrote back, word for word.",
+            "title": "Reply Text",
+            "type": "string"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. Where they replied: \"reddit\", \"twitter\" or \"email\".",
+            "title": "Channel"
+          }
+        },
+        "required": [
+          "prospect_id",
+          "reply_text"
+        ],
+        "title": "record_replyArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Record a prospect's reply",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "preview_station",
+      "description": "Check whether a feed has buyers for a product BEFORE adding it as a station.\n\n    Which communities you listen to decides results more than any setting, and\n    a feed full of people talking about your topic can still contain no one\n    asking to buy. This reads the feed, scores its fresh posts and has the panel\n    judge the best-matching ones (default 8, one judgement each). Nothing is\n    saved.\n\n    Pass `rss_url`, or `entries` (up to 50 {link, title, summary, author,\n    published}) that you fetched yourself. Feeds read on the operator's own\n    machine (read_by: client) must be sent as entries.\n\n    Returns a verdict fixed by pre-set thresholds: VIABLE (worth adding),\n    MARGINAL (a trickle), ON-TOPIC, NOT IN-MARKET (topic talk, no buyers: a\n    different community will do better), NO BUYERS, or NO DATA (nothing could\n    be judged; the explanation says why, such as an empty or stale feed or\n    keywords that blocked every post). Plus a sample of judged posts, each kept\n    or rejected with the judges' stances.\n\n    Presentation: lead with the verdict and its one-line explanation, then how\n    many of the judged posts were kept. Only suggest add_station for VIABLE or\n    MARGINAL.\n    ",
+      "inputSchema": {
+        "properties": {
+          "product_id": {
+            "description": "The product to check the feed for, from get_products.",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "rss_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The feed URL to read. Pass this or entries.",
+            "title": "Rss Url"
+          },
+          "entries": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Posts you fetched yourself, up to 50, each {link, title, summary, author, published}. Required for feeds read on the operator's machine (read_by: client).",
+            "title": "Entries"
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "How many of the best-matching posts the panel judges, 1 to 12 (default 8). Each costs one judgement.",
+            "title": "Sample"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "preview_stationArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Preview a feed before adding it",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_stations",
+      "description": "List your stations (feeds) with a health readout for the last two weeks.\n\n    Each station: id, name, platform, rss_url, read_by (server = SignalPipe\n    reads it, client = your plugin or daemon reads it), active, posts captured,\n    how many reached your queue, empty or rate-limited fetches, and a\n    plain-language verdict (for example \"Posts are arriving but none matched\n    your product: change the anchor sentences\").\n\n    Presentation: one line per station with name, active or paused, and the\n    verdict. Use the ids with update_station / remove_station.\n    ",
+      "inputSchema": {
+        "properties": {
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional. Only this product's stations; leave empty for all of them.",
+            "title": "Product Id"
+          }
+        },
+        "title": "list_stationsArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "List stations with health",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "update_product",
+      "description": "Edit a product, or pause and resume it. Only the fields you pass change.\n\n    anchor_sentences follow the add_product rules (3+, each 5-40 words, the\n    BUYER describing their problem); the previous set is kept so a bad edit can\n    be undone. active=false pauses the product: its stations stop being read and\n    score_signal stops accepting it until you set active=true. Products are\n    paused, never deleted, so their history stays.\n\n    Confirm with the operator before changing anchors or pausing.\n    ",
+      "inputSchema": {
+        "properties": {
+          "product_id": {
+            "description": "The product to change, from get_products.",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new name.",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new description.",
+            "title": "Description"
+          },
+          "value_prop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new value proposition: the buyer's problem it solves.",
+            "title": "Value Prop"
+          },
+          "target_audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new audience: one buyer, described narrowly.",
+            "title": "Target Audience"
+          },
+          "anchor_sentences": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional replacement anchors, following the add_product rules. The previous set is kept so the edit can be undone.",
+            "title": "Anchor Sentences"
+          },
+          "buy_signal_keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional replacement keyword gate. Best left empty (see add_product).",
+            "title": "Buy Signal Keywords"
+          },
+          "competitor_keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional replacement list of direct substitutes.",
+            "title": "Competitor Keywords"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "false pauses the product and its stations; true resumes it.",
+            "title": "Active"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "update_productArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Edit or pause a product",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "update_station",
+      "description": "Pause, resume, rename or re-point a station. Only the fields you pass change.\n\n    Get station ids from list_stations. A new rss_url is checked (http or https,\n    a public host) before it is saved.\n    ",
+      "inputSchema": {
+        "properties": {
+          "station_id": {
+            "description": "The station's id, from list_stations.",
+            "title": "Station Id",
+            "type": "string"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "false pauses the station; true resumes it.",
+            "title": "Active"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new name.",
+            "title": "Name"
+          },
+          "rss_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new feed URL (http or https, a public host). It is checked before it is saved.",
+            "title": "Rss Url"
+          },
+          "keyword": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional new note for the station. It does not filter posts.",
+            "title": "Keyword"
+          }
+        },
+        "required": [
+          "station_id"
+        ],
+        "title": "update_stationArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Edit or pause a station",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "remove_station",
+      "description": "Remove a station. Confirm with the operator first.\n\n    A station that never produced a lead is deleted. One that already produced\n    leads is switched off instead, to keep that history; the reply says which\n    (\"deleted\", or \"paused\" with reason \"has_history\").\n    ",
+      "inputSchema": {
+        "properties": {
+          "station_id": {
+            "description": "The station's id, from list_stations.",
+            "title": "Station Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_id"
+        ],
+        "title": "remove_stationArguments",
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Remove a station",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ],
+  "prompts": [],
+  "resources": []
+}
