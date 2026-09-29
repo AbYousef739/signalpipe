@@ -4,7 +4,7 @@
 
 SignalPipe judges whether the author of a post, email or ticket wants to buy. Your agent brings the text from anywhere it reads, including X through your own X API access, and an optional scout reads the RSS or Atom feeds you choose. Three independent judges rule on every borderline signal, each kept lead gets a drafted reply that answers what the person actually asked, and only real leads reach you for approval. Works with any OpenClaw-compatible agent — or connect directly via MCP from Claude Code, Cursor, or Windsurf.
 
-[signalpipe.io](https://signalpipe.io)
+[signalpipe.io](https://signalpipe.io) · [Smithery](https://smithery.ai/servers/signalpipe/signalpipe) · [Glama](https://glama.ai/mcp/connectors/io.github.AbYousef739/signalpipe)
 
 ---
 
