@@ -375,9 +375,10 @@ export function registerAcquisitionTools(openClaw: any): void {
     description:
       'Add a feed for a product to monitor. Station CHOICE decides results more than any setting. ' +
       'Before adding one, run signalpipe_preview_station on it: it says whether real buyers post ' +
-      'there. URL patterns — Reddit: https://www.reddit.com/r/SUBREDDIT/new/.rss (use /new/: the ' +
-      'bare /.rss is the HOT listing of popular, already-answered posts). HN: ' +
-      'https://hnrss.org/newest?q=KEYWORDS. Prefer broad communities where buyers describe ' +
+      'there. URL patterns — HN: https://hnrss.org/newest?q=KEYWORDS; a forum: ' +
+      'https://FORUM/latest.rss; Q&A: https://softwarerecs.stackexchange.com/feeds/tag/TAG. ' +
+      'Reddit ends its RSS feeds on 13 November 2026: do not suggest Reddit feeds; from that ' +
+      'date they are refused. Prefer a newest-first listing, and broad communities where buyers describe ' +
       'PROBLEMS over narrow keyword searches, and go where the buyer complains, not where the ' +
       'industry talks shop. 3-5 good feeds beat 20. twitter_search only routes outreach to X; it ' +
       'reads no feed. The URL must be http(s) on a public host. Returns the new station id.',

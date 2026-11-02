@@ -122,10 +122,29 @@ function fakeDeps(overrides = {}) {
     ingest: async (id, entries) => { calls.ingested.push([id, entries]); return { status: 'accepted', entries: entries.length } },
     sleep: async (ms) => { calls.slept.push(ms) },
     log: (m) => calls.logs.push(m),
+    // A fixed day before Reddit ends its feeds, so these tests keep passing after it.
+    now: () => new Date('2026-11-02T12:00:00Z'),
     ...overrides,
   }
   return { deps, calls }
 }
+
+test('from 13 November 2026 Reddit feeds are reported as ended, not fetched', async () => {
+  const { deps, calls } = fakeDeps({ now: () => new Date('2026-11-13T00:00:00Z') })
+  const counts = await readOnce(deps)
+  assert.equal(counts.reddit_ended, 1)
+  assert.ok(!calls.fetched.some((u) => u.includes('reddit.com')), 'a Reddit feed is never fetched after the end')
+  assert.ok(calls.fetched.includes('https://forum.example.com/latest.rss'), 'other client feeds are still read')
+  assert.deepEqual(calls.slept, [], 'no minute-long wait before the first feed actually fetched')
+  assert.ok(calls.logs.some((m) => m.includes('Reddit ended its RSS feeds on 13 November 2026')))
+})
+
+test('before 13 November Reddit feeds are read as before', async () => {
+  const { deps, calls } = fakeDeps({ now: () => new Date('2026-11-12T23:59:00Z') })
+  const counts = await readOnce(deps)
+  assert.equal(counts.reddit_ended, 0)
+  assert.ok(calls.fetched.includes('https://www.reddit.com/r/smallbusiness/new/.rss'))
+})
 
 test('only active client stations are read', () => {
   assert.deepEqual(clientStations(STATIONS).map((s) => s.id), ['s1', 's3'])
@@ -138,7 +157,7 @@ test('readOnce fetches the client feeds from here and sends each page', async ()
   assert.deepEqual(calls.slept, [FEED_DELAY_MS])
   assert.deepEqual(calls.ingested.map(([id]) => id), ['s1', 's3'])
   assert.equal(calls.ingested[0][1][0].author, '/u/buyer_one')
-  assert.deepEqual(counts, { stations: 2, sent: 2, entries: 3, empty: 0, skipped: 0, rate_limited: 0, errors: 0 })
+  assert.deepEqual(counts, { stations: 2, sent: 2, entries: 3, empty: 0, skipped: 0, rate_limited: 0, errors: 0, reddit_ended: 0 })
 })
 
 test('readOnce counts cooldowns, empty feeds and errors, and carries on', async () => {

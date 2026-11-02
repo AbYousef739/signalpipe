@@ -4,7 +4,7 @@ import { registerSenderTools } from './tools/sender'
 import { registerReaderTools } from './tools/reader'
 
 /**
- * SignalPipe — OpenClaw Plugin v2.1.2
+ * SignalPipe — OpenClaw Plugin v2.1.4
  *
  * Registers 29 tools across four subsystems:
  *   Acquisition tools   — top-of-funnel: product + station setup → signal
@@ -15,6 +15,10 @@ import { registerReaderTools } from './tools/reader'
  *                         them on Reddit with the operator's OWN credentials
  *   Reader tools        — client-side reading and feed preview: fetch feeds on
  *                         this machine and send the posts to the brain for judging
+ *
+ * v2.1.4 (2026-11-02). Reddit ends its RSS feeds on 13 November 2026. From then
+ *   signalpipe_read_feeds does not fetch Reddit feeds; each is reported as ended with
+ *   what to do instead. Feed guidance no longer suggests Reddit.
  *
  * v2.1.2 (2026-09-28). Describe one buyer. signalpipe_add_product and
  *   signalpipe_suggest_anchors ask for ONE buyer, described narrowly, in
@@ -153,7 +157,7 @@ export function register(api: any): void {
   registerSenderTools(api)
   registerReaderTools(api)
 
-  console.log('[SignalPipe] Plugin v2.1.2 loaded — 29 tools registered (acquisition + companion + sender + reader)')
+  console.log('[SignalPipe] Plugin v2.1.4 loaded — 29 tools registered (acquisition + companion + sender + reader)')
 }
 
 export default register

@@ -40,11 +40,12 @@ test('score_signal takes context and explains panel_verdict', () => {
   assert.match(t.description, /panel_verdict/)
 })
 
-test('add_station guidance points at /new/.rss and at a preview first', () => {
+test('add_station guidance suggests no Reddit feeds, says why, and points at a preview first', () => {
   const t = registered().find((x) => x.name === 'signalpipe_add_station')
-  assert.match(t.description, /\/new\/\.rss/)
+  assert.doesNotMatch(t.description, /reddit\.com\/r\//)
+  assert.match(t.description, /Reddit ends its RSS feeds on 13 November 2026/)
+  assert.match(t.description, /newest-first/)
   assert.match(t.description, /signalpipe_preview_station/)
-  assert.doesNotMatch(t.description, /r\/SUBREDDIT\/\.rss —/)
 })
 
 const RSS = `<rss><channel>

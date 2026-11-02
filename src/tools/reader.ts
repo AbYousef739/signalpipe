@@ -69,7 +69,7 @@ export function registerReaderTools(openClaw: any): void {
       'posts were kept. Suggest signalpipe_add_station only for VIABLE or MARGINAL.',
     parameters: Type.Object({
       product_id: Type.String({ description: 'Product to judge the feed against (from signalpipe_get_products)' }),
-      rss_url:    Type.String({ description: 'The feed to check, e.g. https://www.reddit.com/r/SUBREDDIT/new/.rss' }),
+      rss_url:    Type.String({ description: 'The feed to check, e.g. https://FORUM/latest.rss or https://hnrss.org/newest?q=KEYWORDS' }),
       sample:     Type.Optional(Type.Integer({ minimum: 1, maximum: 12, description: 'Posts for the judges (default 8)' })),
     }),
     async execute(_id: string, params: { product_id: string; rss_url: string; sample?: number }) {

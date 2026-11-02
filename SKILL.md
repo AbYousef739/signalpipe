@@ -20,6 +20,8 @@ SignalPipe gives you a full agentic sales pipeline:
 
 Four subsystems, twenty-nine tools. Use them in sequence.
 
+> **v2.1.4 — Reddit ends its RSS feeds on 13 November 2026.** From that date `signalpipe_read_feeds` no longer fetches Reddit feeds: each is reported as ended, with what to do instead (pause or remove it, and add a forum, a Q&A site or a Hacker News search). Feed guidance no longer suggests Reddit. Scoring Reddit posts you are allowed to use is unchanged.
+
 > **v2.1.2 — describe one buyer.** `signalpipe_add_product` and `signalpipe_suggest_anchors` now ask for one buyer, described narrowly, in `target_audience` and `value_prop`. The judges read both fields, and a broad audience makes them keep weak leads.
 
 > **v2.1.1 — reading keeps up with Reddit's limits.** Feeds are read a minute apart (five seconds apart, Reddit answered every feed after the first with HTTP 429), a throttled feed is retried once, and a one-off `signalpipe_read_feeds` starts the pass in the background and returns at once.
@@ -219,13 +221,16 @@ Edit a product, or pause and resume it. Only the fields passed change.
 ### Tool: `signalpipe_add_station`
 Add an RSS feed or search source to monitor for a product.
 
-**When to call:** User wants to monitor a new subreddit, Hacker News keyword, or RSS feed. Run `signalpipe_preview_station` on it first, and add it only if the verdict is VIABLE or MARGINAL. The URL must be http(s) on a public host; the reply includes the new station's id.
+**When to call:** User wants to monitor a forum, a Q&A site, a Hacker News keyword, or any RSS feed. Run `signalpipe_preview_station` on it first, and add it only if the verdict is VIABLE or MARGINAL. The URL must be http(s) on a public host; the reply includes the new station's id.
 
 **Common patterns:**
-- Reddit: `https://www.reddit.com/r/SUBREDDIT/new/.rss` — use `/new/`, not the
-  bare `/.rss`. Bare returns the *hot* listing (popular, already-answered
-  posts); `/new/` returns fresh ones, and scoring rewards recency heavily.
 - Hacker News: `https://hnrss.org/newest?q=YOUR+KEYWORDS`
+- A forum: `https://FORUM/latest.rss`
+- Q&A: `https://softwarerecs.stackexchange.com/feeds/tag/TAG`
+- Prefer a newest-first listing over a front page or hot listing: scoring
+  rewards recency heavily.
+- **Reddit ends its RSS feeds on 13 November 2026.** Do not suggest Reddit
+  feeds; from that date new ones are refused and existing ones return nothing.
 
 **Choosing stations matters more than any setting:**
 - Prefer **broad communities where buyers describe problems** over narrow

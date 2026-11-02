@@ -21,9 +21,24 @@ const MAX_ENTRIES = 50
 const MIN_EVERY_MINUTES = 10
 export const USER_AGENT = 'signalpipe-openclaw (+https://github.com/AbYousef739/signalpipe)'
 
+// Reddit ends its RSS feeds, and its unauthenticated .json addresses, on
+// 13 November 2026 (announced 30 September 2026). From then a Reddit feed is
+// not fetched at all: it is reported as ended, once per pass, so the operator
+// can pause or remove it instead of reading "the feed answered HTTP 403".
+export const REDDIT_FEEDS_END = new Date('2026-11-13T00:00:00Z')
+export const isRedditFeed = (url: string): boolean => {
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'reddit.com' || host === 'redd.it' || host.endsWith('.reddit.com')
+  } catch {
+    return false
+  }
+}
+
 export interface Station { id: string; name?: string; rss_url?: string; read_by?: string; active?: boolean }
 export interface ReadCounts {
   stations: number; sent: number; entries: number; empty: number; skipped: number; rate_limited: number; errors: number
+  reddit_ended: number
 }
 
 /** A feed that answered with an HTTP error; `status` says which. */
@@ -39,6 +54,7 @@ export interface ReaderDeps {
   fetchText: (url: string) => Promise<string>
   sleep: (ms: number) => Promise<void>
   log: (msg: string) => void
+  now?: () => Date
 }
 
 export async function fetchFeedText(url: string): Promise<string> {
@@ -69,15 +85,23 @@ export function clientStations(stations: Station[]): Station[] {
 /** Read every client-side station once. */
 export async function readOnce(deps: ReaderDeps = defaultDeps): Promise<ReadCounts> {
   const stations = clientStations(await deps.listStations())
-  const counts: ReadCounts = { stations: stations.length, sent: 0, entries: 0, empty: 0, skipped: 0, rate_limited: 0, errors: 0 }
+  const counts: ReadCounts = { stations: stations.length, sent: 0, entries: 0, empty: 0, skipped: 0, rate_limited: 0, errors: 0, reddit_ended: 0 }
   if (!stations.length) {
     deps.log('no stations are marked for this machine (read_by=client); nothing to do')
     return counts
   }
+  const redditEnded = (deps.now ? deps.now() : new Date()) >= REDDIT_FEEDS_END
+  let fetched = 0
   for (let i = 0; i < stations.length; i++) {
     const station = stations[i]
     const name = station.name || station.id
-    if (i > 0) await deps.sleep(FEED_DELAY_MS)
+    if (redditEnded && isRedditFeed(station.rss_url as string)) {
+      counts.reddit_ended++
+      deps.log(`${name}: Reddit ended its RSS feeds on 13 November 2026, so this feed can no longer be read. ` +
+        'Pause or remove it (signalpipe_update_station or signalpipe_remove_station), and add a forum, a Q&A site or a Hacker News search instead.')
+      continue
+    }
+    if (fetched++ > 0) await deps.sleep(FEED_DELAY_MS)
     try {
       const url = station.rss_url as string
       let text: string

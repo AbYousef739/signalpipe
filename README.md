@@ -41,7 +41,7 @@ The brain scores, drafts, and approves; the plugin can now also **send**. An opt
 | `signalpipe_suggest_anchors` | Draft buyer-voice anchor sentences for a product, for you to edit before adding it |
 | `signalpipe_add_product` | Register a new product to monitor — describe it in buyer language |
 | `signalpipe_update_product` | Edit a product's anchors or description, or pause and resume it |
-| `signalpipe_add_station` | Add an RSS feed, subreddit, or HN keyword feed for a product |
+| `signalpipe_add_station` | Add an RSS feed (a forum, a Q&A site) or an HN keyword feed for a product. Reddit ends its RSS feeds on 13 November 2026 |
 | `signalpipe_list_stations` | Your feeds with a health readout: posts captured, posts that reached your queue, and what to change |
 | `signalpipe_update_station` | Pause, resume, rename or re-point a feed |
 | `signalpipe_remove_station` | Remove a feed (one with history is switched off instead, to keep it) |
